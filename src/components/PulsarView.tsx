@@ -1,22 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-import { ColorGUIHelper } from "./utils";
 
-export default function PulsarView(props) {
-	const mount = useRef(null);
+export default function PulsarView(props: {
+	isAnimating?: boolean;
+	pulsarRotationRate?: number; // TODO: Change to period
+	pulsarBeamLatitude?: number;
+}) {
+	const { isAnimating, pulsarBeamLatitude, pulsarRotationRate } = props;
+	const pulsarParamsRef = useRef({
+		isAnimating: isAnimating ?? true,
+		pulsarRotationRate: pulsarRotationRate ?? 0.01,
+		pulsarBeamLatitude: pulsarBeamLatitude ?? 0,
+	});
 
-	const controlsAnimation = useRef<Record<string, () => void>>(null);
-	const [isAnimating, setIsAnimating] = useState(true);
+	const mountRef = useRef<HTMLElement | null>(null);
+	const controlsAnimationRef = useRef<Record<string, () => void>>(null);
 
 	useEffect(() => {
+		const pulsarParams = pulsarParamsRef.current;
+
 		// DOM mount node
-		const mountNode = mount.current;
+		const mountNode = mountRef.current;
+		if (!mountNode) return; // Check if the element has rendered
+
 		mountNode.focus();
 		let width = mountNode.clientWidth;
 		let height = mountNode.clientHeight;
-		let frameID: number | null;
+		let frameID: number;
 
 		// Scene
 		const scene = new THREE.Scene();
@@ -47,9 +58,9 @@ export default function PulsarView(props) {
 		const pulsarBeamRadSeg = 32;
 		const pulsarBeamHeightSeg = 4;
 		const pulsarBeamColor = "#ffffff";
-		const pulsarRotationRateDefault = 0.01;
 
 		// Main body
+		// TODO: Implement changing the axis of rotation
 		const pulsarBody = new THREE.Group();
 		const pulsarBodyGeometry = new THREE.SphereGeometry(
 			pulsarBodyRadius,
@@ -76,8 +87,16 @@ export default function PulsarView(props) {
 		});
 		const pulsarBeam1 = new THREE.Mesh(pulsarBeamGeometry, pulsarBeamMaterial);
 		const pulsarBeam2 = new THREE.Mesh(pulsarBeamGeometry, pulsarBeamMaterial);
-		pulsarBeam1.rotation.set(0, 0, -Math.PI / 2);
-		pulsarBeam2.rotation.set(0, 0, Math.PI / 2);
+		pulsarBeam1.rotation.set(
+			0,
+			0,
+			-Math.PI / 2 + pulsarParams.pulsarBeamLatitude,
+		);
+		pulsarBeam2.rotation.set(
+			0,
+			0,
+			Math.PI / 2 - pulsarParams.pulsarBeamLatitude,
+		);
 		pulsarBody.add(pulsarBeam1);
 		pulsarBody.add(pulsarBeam2);
 
@@ -113,8 +132,12 @@ export default function PulsarView(props) {
 
 		// Orbital controls
 		const controlsOrbital = new OrbitControls(camera, renderer.domElement);
+		controlsOrbital.enablePan = false;
+		controlsOrbital.rotateSpeed = 2;
+		controlsOrbital.listenToKeyEvents(window);
 		controlsOrbital.addEventListener("change", renderScene);
 		controlsOrbital.update();
+		// TODO: Create on-screen buttons to rotate camera
 
 		// Handling window resizing
 		const handleResize = () => {
@@ -127,12 +150,8 @@ export default function PulsarView(props) {
 		};
 
 		// Animation
-		const guiParams = {
-			pulsarRotationRate: pulsarRotationRateDefault,
-		};
-
 		const animate = () => {
-			pulsarBody.rotation.y += guiParams.pulsarRotationRate;
+			pulsarBody.rotation.y += pulsarParams.pulsarRotationRate;
 			controlsOrbital.update();
 			renderScene();
 			frameID = window.requestAnimationFrame(animate);
@@ -147,71 +166,41 @@ export default function PulsarView(props) {
 
 		const pauseAnimation = () => {
 			cancelAnimationFrame(frameID);
-			frameID = null;
+			frameID = 0;
 			controlsOrbital.update();
 		};
 
-		controlsAnimation.current = { startAnimation, pauseAnimation };
-
-		// GUI to change parameters
-		const gui = new GUI();
-		gui
-			.addColor(new ColorGUIHelper(lightDirectional, "color"), "value")
-			.name("color");
-		const guiPulsarRotation = gui
-			.add(pulsarBody.rotation, "y", 0, 2 * Math.PI)
-			.name("Pulsar rotation")
-			.listen();
-		guiPulsarRotation.onChange((value) => {
-			if (value >= 2 * Math.PI) {
-				pulsarBody.rotation.y = 0;
-				guiPulsarRotation.updateDisplay();
-			}
-		});
-		gui
-			.add(guiParams, "pulsarRotationRate", 0, 0.02, 0.0001)
-			.name("Pulsar rotation rate");
-		gui.onChange(renderScene);
+		controlsAnimationRef.current = { startAnimation, pauseAnimation };
 
 		// Add the rendered canvas to the DOM and start animation
 		mountNode.appendChild(renderer.domElement);
 		window.addEventListener("resize", handleResize);
-		startAnimation();
+		if (pulsarParams.isAnimating) startAnimation();
 		console.log("Animation loaded");
 
 		// Cleanup
 		return () => {
-			pauseAnimation();
 			controlsOrbital.removeEventListener("change", renderScene);
 			window.removeEventListener("resize", handleResize);
 			mountNode.removeChild(renderer.domElement);
-
-			scene.remove(pulsarBody);
-			pulsarBodyGeometry.dispose();
-			pulsarBodyMaterial.dispose();
 		};
 	}, []);
 
-	const toggleAnimationListener = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		if (e.code === "Space") {
-			if (!isAnimating) {
-				controlsAnimation.current?.startAnimation();
-				setIsAnimating(true);
-				console.log("Start animation");
-			} else {
-				controlsAnimation.current?.pauseAnimation();
-				setIsAnimating(false);
-				console.log("Stop animation");
-			}
+	useEffect(() => {
+		if (pulsarRotationRate !== undefined) {
+			pulsarParamsRef.current.pulsarRotationRate = pulsarRotationRate;
 		}
-	};
+	}, [pulsarRotationRate]);
 
-	return (
-		<div
-			tabIndex={0}
-			ref={mount}
-			style={{ width: "100%", height: "100vh", cursor: "move" }}
-			onKeyDown={toggleAnimationListener}
-		/>
-	);
+	useEffect(() => {
+		if (isAnimating) {
+			controlsAnimationRef.current?.startAnimation();
+			console.log("Start animation");
+		} else {
+			controlsAnimationRef.current?.pauseAnimation();
+			console.log("Stop animation");
+		}
+	}, [isAnimating]);
+
+	return <div id="pulsar-model" ref={mountRef} />;
 }
