@@ -4,8 +4,6 @@ import { Line, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-import { ColorGUIHelper } from "./utils";
 
 // Corresponds to: the inner contents of the Three.js `useEffect` setup
 // (scene graph + animation loop). In R3F this is split into a declarative
@@ -13,9 +11,9 @@ import { ColorGUIHelper } from "./utils";
 // owns the <Canvas> and the DOM-level concerns (keyboard listener, GUI).
 function PulsarScene(props: {
 	isAnimating: boolean;
-	guiParamsRef: React.MutableRefObject<{ pulsarRotationRate: number }>;
-	pulsarBodyRef: React.MutableRefObject<THREE.Group | null>;
-	directionalLightRef: React.MutableRefObject<THREE.DirectionalLight | null>;
+	guiParamsRef: React.RefObject<{ pulsarRotationRate: number }>;
+	pulsarBodyRef: React.RefObject<THREE.Group | null>;
+	directionalLightRef: React.RefObject<THREE.DirectionalLight | null>;
 }) {
 	const { isAnimating, guiParamsRef, pulsarBodyRef, directionalLightRef } =
 		props;
@@ -137,12 +135,7 @@ function PulsarScene(props: {
 	);
 }
 
-export default function PulsarViewF(props: {
-	pulsarRotation?: number;
-	pulsarRotationRate?: number;
-}) {
-	const { pulsarRotation, pulsarRotationRate } = props;
-
+export default function PulsarViewF() {
 	// Corresponds to: the `pulsarBeamHeight` constant being reused for the
 	// initial camera position in the original component.
 	const pulsarBeamHeight = 20;
@@ -164,65 +157,6 @@ export default function PulsarViewF(props: {
 	// `lightDirectional` light that the GUI mutates directly.
 	const pulsarBodyRef = useRef<THREE.Group | null>(null);
 	const directionalLightRef = useRef<THREE.DirectionalLight | null>(null);
-
-	// Corresponds to: the lil-gui setup block in the original useEffect.
-	// We wait until the refs are populated (after the Canvas mounts its
-	// scene) before wiring up the GUI to those objects.
-	useEffect(() => {
-		// Poll until refs are ready, since the Canvas mounts asynchronously.
-		let cancelled = false;
-		let gui: GUI | null = null;
-
-		const setupGui = () => {
-			if (cancelled) return;
-			if (!pulsarBodyRef.current || !directionalLightRef.current) {
-				requestAnimationFrame(setupGui);
-				return;
-			}
-
-			gui = new GUI();
-
-			// Corresponds to: gui.addColor(new ColorGUIHelper(lightDirectional,
-			// "color"), "value").name("color")
-			gui
-				.addColor(
-					new ColorGUIHelper(directionalLightRef.current, "color"),
-					"value",
-				)
-				.name("color");
-
-			// Corresponds to: gui.add(pulsarBody.rotation, "y", 0, 2*PI)
-			//   .name("Pulsar rotation").listen() + the onChange wrap-around
-			const guiPulsarRotation = gui
-				.add(pulsarBodyRef.current.rotation, "y", 0, 2 * Math.PI)
-				.name("Pulsar rotation")
-				.listen();
-			guiPulsarRotation.onChange((value: number) => {
-				if (value >= 2 * Math.PI && pulsarBodyRef.current) {
-					pulsarBodyRef.current.rotation.y = 0;
-					guiPulsarRotation.updateDisplay();
-				}
-			});
-
-			// Corresponds to: gui.add(guiParams, "pulsarRotationRate",
-			// 0, 0.02, 0.0001).name("Pulsar rotation rate")
-			gui
-				.add(guiParamsRef.current, "pulsarRotationRate", 0, 0.02, 0.0001)
-				.name("Pulsar rotation rate");
-
-			// In the original: `gui.onChange(renderScene)`. R3F drives the
-			// render loop continuously via `useFrame`, so no manual re-render
-			// is needed when GUI values change.
-		};
-
-		setupGui();
-
-		// Corresponds to: cleanup tearing down the GUI alongside the renderer.
-		return () => {
-			cancelled = true;
-			if (gui) gui.destroy();
-		};
-	}, []);
 
 	// Corresponds to: `toggleAnimationListener` — Space toggles animation.
 	const toggleAnimationListener = (e: React.KeyboardEvent<HTMLDivElement>) => {
