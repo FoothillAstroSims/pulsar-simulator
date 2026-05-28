@@ -6,3 +6,7 @@
 #pulsar-model:hover {
 	cursor: grab;
 }
+
+#pulsar-model:active {
+	cursor: grabbing;
+}
