@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import type { PulsarViewRef } from "./components/PulsarView";
+import PulsarGraph from "./components/PulsarGraph";
+import type { PulsarModelRef } from "./components/PulsarModel";
 import {
 	isAnimatingDefault,
-	PulsarView,
+	PulsarModel,
 	pulsarAxialTiltDefault,
 	pulsarBeamAngleDefault,
 	pulsarBeamLatitudeDefault,
 	pulsarPeriodDefault,
-} from "./components/PulsarView";
+	pulsarPhaseDefault,
+} from "./components/PulsarModel";
+import { PulsarParameterInput } from "./components/PulsarParameterInput";
 
-function App() {
+export default function App() {
 	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
+	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
 	const [pulsarPeriod, setPulsarPeriod] = useState(pulsarPeriodDefault);
 	const [pulsarAxialTilt, setPulsarAxialTilt] = useState(
 		pulsarAxialTiltDefault,
@@ -23,7 +27,7 @@ function App() {
 		pulsarBeamAngleDefault,
 	);
 
-	const pulsarViewRef = useRef<PulsarViewRef | null>(null);
+	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
 	// Register keyboard event handlers
 	useEffect(() => {
@@ -54,7 +58,7 @@ function App() {
 				return;
 
 			if (e.key === "r" || e.key === "R") {
-				pulsarViewRef.current?.resetCamera();
+				pulsarModelRef.current?.resetCamera();
 			}
 		};
 		window.addEventListener("keydown", resetCameraHandler);
@@ -67,12 +71,15 @@ function App() {
 
 	return (
 		// TODO: Implement pulsar beam intensity graph, and hook it up to sync with the model
-		// TODO: Improve slider appearance: add labels, show value next to slider
 		<>
 			<div>
 				<p>Test</p>
 			</div>
 			<div>
+				<PulsarGraph />
+			</div>
+			<div id="pulsarParameters">
+				<input type="text" />
 				<button type="button" onClick={() => setIsAnimating(!isAnimating)}>
 					{isAnimating ? "Stop" : "Start"}
 				</button>
@@ -80,7 +87,7 @@ function App() {
 				<button
 					type="button"
 					onClick={() => {
-						pulsarViewRef.current?.resetCamera();
+						pulsarModelRef.current?.resetCamera();
 						console.log("Camera reset");
 					}}
 				>
@@ -90,6 +97,7 @@ function App() {
 				<button
 					type="button"
 					onClick={() => {
+						setPulsarPhase(pulsarPhaseDefault);
 						setPulsarPeriod(pulsarPeriodDefault);
 						setPulsarAxialTilt(pulsarAxialTiltDefault);
 						setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
@@ -97,13 +105,29 @@ function App() {
 						console.log("Pulsar parameters reset");
 					}}
 				>
-					Reset to default parameters
+					Reset parameters
 				</button>
+				<br />
 
-				<label htmlFor="pulsarPeriod">Pulsar period</label>
-				<input
+				<PulsarParameterInput
+					name="pulsarPhase"
+					label="Pulsar phase"
+					min={0.0}
+					max={2 * Math.PI}
+					step={0.001}
+					value={pulsarPhase}
+					disabled={isAnimating}
+					onChange={(e) => {
+						setPulsarPhase(parseFloat(e.target.value));
+						if (!isAnimating) {
+							console.log(`Pulsar phase: ${e.target.value}`);
+						}
+					}}
+				/>
+				<br />
+				<PulsarParameterInput
 					name="pulsarPeriod"
-					type="range"
+					label="Pulsar period"
 					min={10.0}
 					max={100.0}
 					step={0.5}
@@ -113,11 +137,10 @@ function App() {
 						console.log(`Pulsar period: ${e.target.value}`);
 					}}
 				/>
-
-				<label htmlFor="pulsarAxialTilt">Pulsar axial tilt</label>
-				<input
+				<br />
+				<PulsarParameterInput
 					name="pulsarAxialTilt"
-					type="range"
+					label="Pulsar axial tilt"
 					min={0.0}
 					max={Math.PI / 4}
 					step={0.001}
@@ -127,11 +150,10 @@ function App() {
 						console.log(`Pulsar axial tilt: ${e.target.value}`);
 					}}
 				/>
-
-				<label htmlFor="pulsarBeamLatitude">Pulsar beam latitude</label>
-				<input
+				<br />
+				<PulsarParameterInput
 					name="pulsarBeamLatitude"
-					type="range"
+					label="Pulsar beam latitude"
 					min={0.0}
 					max={Math.PI / 2}
 					step={0.001}
@@ -141,11 +163,10 @@ function App() {
 						console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
 				/>
-
-				<label htmlFor="pulsarBeamAngle">Pulsar beam angle</label>
-				<input
+				<br />
+				<PulsarParameterInput
 					name="pulsarBeamAngle"
-					type="range"
+					label="Pulsar beam angle"
 					min={0.0}
 					max={Math.PI / 12}
 					step={0.001}
@@ -157,17 +178,17 @@ function App() {
 				/>
 			</div>
 			<div style={{ height: "80vh" }}>
-				<PulsarView
-					ref={pulsarViewRef}
+				<PulsarModel
+					ref={pulsarModelRef}
 					isAnimating={isAnimating}
+					pulsarPhase={pulsarPhase}
 					pulsarPeriod={pulsarPeriod}
 					pulsarAxialTilt={pulsarAxialTilt}
 					pulsarBeamLatitude={pulsarBeamLatitude}
 					pulsarBeamAngle={pulsarBeamAngle}
+					onPulsarPhaseChange={setPulsarPhase}
 				/>
 			</div>
 		</>
 	);
 }
-
-export default App;

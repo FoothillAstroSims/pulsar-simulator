@@ -5,22 +5,26 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
 
-// Methods to pass to the parent node ref
-export interface PulsarViewRef {
+// Parameters and methods to expose to the parent node
+export interface PulsarModelRef {
+	camera: THREE.Camera | undefined;
 	resetCamera: () => void;
 }
 
 // Pulsar parameters
-export interface PulsarParamsRef {
+export interface PulsarModelProps {
 	isAnimating: boolean;
+	pulsarPhase: number;
 	pulsarPeriod: number;
 	pulsarAxialTilt: number;
 	pulsarBeamLatitude: number;
 	pulsarBeamAngle: number;
+	onPulsarPhaseChange?: (arg0: number) => void;
 }
 
 // Default pulsar parameter values
 export const isAnimatingDefault = true;
+export const pulsarPhaseDefault = 0.0;
 export const pulsarPeriodDefault = 50.0;
 export const pulsarAxialTiltDefault = 0.0;
 export const pulsarBeamLatitudeDefault = 0.0;
@@ -44,18 +48,20 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
-export function PulsarView(
-	props: PulsarParamsRef & {
-		ref: React.RefObject<PulsarViewRef | null>;
+export function PulsarModel(
+	props: PulsarModelProps & {
+		ref: React.RefObject<PulsarModelRef | null>;
 	},
 ) {
 	const {
 		ref,
 		isAnimating,
+		pulsarPhase,
 		pulsarPeriod,
 		pulsarAxialTilt,
 		pulsarBeamLatitude,
 		pulsarBeamAngle,
+		onPulsarPhaseChange,
 	} = props;
 
 	const mountRef = useRef<HTMLDivElement | null>(null);
@@ -69,14 +75,17 @@ export function PulsarView(
 		startAnimation: () => void;
 		stopAnimation: () => void;
 	} | null>(null);
-	const pulsarParamsRef = useRef<PulsarParamsRef>({
+	const pulsarParamsRef = useRef<PulsarModelProps>({
 		isAnimating: isAnimating ?? isAnimatingDefault,
+		pulsarPhase: pulsarPhase ?? pulsarPhaseDefault,
 		pulsarPeriod: pulsarPeriod ?? pulsarPeriodDefault,
 		pulsarAxialTilt: pulsarAxialTilt ?? pulsarAxialTiltDefault,
 		pulsarBeamLatitude: pulsarBeamLatitude ?? pulsarBeamLatitudeDefault,
 		pulsarBeamAngle: pulsarBeamAngle ?? pulsarBeamAngleDefault,
+		onPulsarPhaseChange: onPulsarPhaseChange,
 	});
 
+	// Initialize Three.js pulsar model and animation
 	useEffect(() => {
 		// DOM mount node reference
 		const mountNode = mountRef.current;
@@ -204,11 +213,21 @@ export function PulsarView(
 			Math.PI / 2 - pulsarParams.pulsarBeamLatitude,
 		);
 
+		const pulsarBeamArrowHelper = new THREE.ArrowHelper(
+			new THREE.Vector3(0, 1, 0),
+			new THREE.Vector3(0, 0, 0),
+			pulsarBodyRadius * 2,
+			"red",
+		);
+		pulsarBeam1.add(pulsarBeamArrowHelper);
+
 		const pulsarBeams = new THREE.Group();
 		pulsarBeams.name = "pulsarBeams";
 		pulsarBeams.add(pulsarBeam1);
 		pulsarBeams.add(pulsarBeam2);
 		pulsar.add(pulsarBeams);
+
+		pulsar.rotation.y = pulsarParams.pulsarPhase;
 
 		// Wrapper to help with axial tilt
 		const pulsarAxialTiltWrapper = new THREE.Group();
@@ -259,7 +278,18 @@ export function PulsarView(
 
 		// Animation
 		const animate = () => {
-			pulsar.rotateY(1.0 / pulsarParams.pulsarPeriod);
+			if (pulsarParams.isAnimating) {
+				pulsarParams.pulsarPhase =
+					(pulsarParams.pulsarPhase + 1.0 / pulsarParams.pulsarPeriod) %
+					(2 * Math.PI);
+				pulsar.rotation.y = pulsarParams.pulsarPhase;
+				pulsarParams.onPulsarPhaseChange?.(pulsarParams.pulsarPhase);
+
+				const direction = new THREE.Vector3();
+				pulsarBeam1.getWorldDirection(direction);
+				console.log(`Beam direction: ${direction.toArray()}`);
+			}
+
 			orbitControls.update();
 			renderScene();
 			frameID = window.requestAnimationFrame(animate);
@@ -283,18 +313,18 @@ export function PulsarView(
 		// Add the rendered canvas to the DOM and start animation
 		mountNode.appendChild(renderer.domElement);
 		window.addEventListener("resize", handleResize);
-		if (pulsarParams.isAnimating) startAnimation();
 		console.log("Animation loaded");
 
 		// Cleanup
 		return () => {
+			cancelAnimationFrame(frameID);
 			orbitControls.removeEventListener("change", renderScene);
 			window.removeEventListener("resize", handleResize);
 			mountNode.removeChild(renderer.domElement);
 		};
 	}, []);
 
-	// Expose certain controls to the parent node
+	// Expose certain parameters and methods to the parent node
 	useImperativeHandle(
 		ref,
 		() => ({
@@ -302,12 +332,15 @@ export function PulsarView(
 			resetCamera: () => {
 				modelRef.current?.orbitControls.reset();
 			},
+			camera: modelRef.current?.camera,
 		}),
 		[],
 	);
 
 	// Animation start/stop
 	useEffect(() => {
+		pulsarParamsRef.current.isAnimating = isAnimating;
+
 		if (isAnimating) {
 			controlsAnimationRef.current?.startAnimation();
 			console.log("Animation started");
@@ -316,6 +349,21 @@ export function PulsarView(
 			console.log("Animation stopped");
 		}
 	}, [isAnimating]);
+
+	// Change pulsar phase when animation is stopped
+	useEffect(() => {
+		if (pulsarPhase === undefined) return;
+		if (pulsarParamsRef.current.isAnimating) return;
+
+		pulsarParamsRef.current.pulsarPhase = pulsarPhase;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const pulsar = scene.getObjectByName("pulsar") as THREE.Group;
+			pulsar.rotation.y = pulsarPhase;
+			renderer.render(scene, camera);
+		}
+	}, [pulsarPhase]);
 
 	// Change pulsar period
 	useEffect(() => {
@@ -331,15 +379,9 @@ export function PulsarView(
 		if (pulsarBeamLatitude !== undefined) {
 			pulsarParamsRef.current.pulsarBeamLatitude = pulsarBeamLatitude;
 
-			const scene = modelRef.current?.scene;
-			const camera = modelRef.current?.camera;
-			const renderer = modelRef.current?.renderer;
+			const { scene, camera, renderer } = modelRef.current ?? {};
 
-			if (
-				scene !== undefined &&
-				camera !== undefined &&
-				renderer !== undefined
-			) {
+			if (scene && camera && renderer) {
 				const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
 				const pulsarBeam2 = scene.getObjectByName("pulsarBeam2") as THREE.Mesh;
 				pulsarBeam1.rotation.set(0, 0, -pulsarBeamLatitude - Math.PI / 2);
@@ -355,15 +397,9 @@ export function PulsarView(
 		if (pulsarAxialTilt !== undefined) {
 			pulsarParamsRef.current.pulsarAxialTilt = pulsarAxialTilt;
 
-			const scene = modelRef.current?.scene;
-			const camera = modelRef.current?.camera;
-			const renderer = modelRef.current?.renderer;
+			const { scene, camera, renderer } = modelRef.current ?? {};
 
-			if (
-				scene !== undefined &&
-				camera !== undefined &&
-				renderer !== undefined
-			) {
+			if (scene && camera && renderer) {
 				const pulsarAxialTiltWrapper = scene.getObjectByName(
 					"pulsarAxialTiltWrapper",
 				) as THREE.Group;
@@ -379,15 +415,9 @@ export function PulsarView(
 		if (pulsarBeamAngle !== undefined) {
 			pulsarParamsRef.current.pulsarBeamAngle = pulsarBeamAngle;
 
-			const scene = modelRef.current?.scene;
-			const camera = modelRef.current?.camera;
-			const renderer = modelRef.current?.renderer;
+			const { scene, camera, renderer } = modelRef.current ?? {};
 
-			if (
-				scene !== undefined &&
-				camera !== undefined &&
-				renderer !== undefined
-			) {
+			if (scene && camera && renderer) {
 				const pulsarBeamRadius = pulsarBeamHeight * Math.tan(pulsarBeamAngle);
 				const pulsarBeams = scene.getObjectByName("pulsarBeams")
 					?.children as THREE.Mesh<THREE.ConeGeometry>[];
@@ -406,6 +436,12 @@ export function PulsarView(
 			}
 		}
 	}, [pulsarBeamAngle]);
+
+	useEffect(() => {
+		if (onPulsarPhaseChange !== undefined) {
+			pulsarParamsRef.current.onPulsarPhaseChange = onPulsarPhaseChange;
+		}
+	}, [onPulsarPhaseChange]);
 
 	return <div id="pulsar-model" ref={mountRef} />;
 }
