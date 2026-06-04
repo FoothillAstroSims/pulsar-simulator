@@ -4,7 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { pulsarBeamDirection } from "./utils";
+import { pulsarBeamDirection } from "../utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
@@ -55,9 +55,13 @@ const cameraPositionDefault: [number, number, number] = [
 	pulsarBodyRadius * 2,
 ];
 
+const pulsarBeamLocalDirection = new THREE.Vector3(0, -1, 0);
+const pulsarBeamWorldDirection = new THREE.Vector3();
+const pulsarBeamWorldQuaternion = new THREE.Quaternion();
+
 export function PulsarModel(
 	props: PulsarModelProps & {
-		ref: React.RefObject<PulsarModelRef | null>;
+		ref?: React.RefObject<PulsarModelRef | null>;
 	},
 ) {
 	const {
@@ -219,15 +223,6 @@ export function PulsarModel(
 		// pulsarBeam1.material = pulsarBeam1.material.clone();
 		// pulsarBeam1.material.color.set("red");
 
-		const pulsarBeamArrowHelper = new THREE.ArrowHelper(
-			new THREE.Vector3(0, 1, 0),
-			new THREE.Vector3(0, 0, 0),
-			pulsarBodyRadius * 2,
-			"red",
-		);
-		pulsarBeamArrowHelper.name = "pulsarBeamArrowHelper";
-		pulsarBeam2.add(pulsarBeamArrowHelper);
-
 		const pulsarBeams = new THREE.Group();
 		pulsarBeams.name = "pulsarBeams";
 		pulsarBeams.add(pulsarBeam1);
@@ -267,6 +262,8 @@ export function PulsarModel(
 		const emitCameraDirection = () => {
 			cameraDirection.copy(camera.position).normalize();
 			pulsarParams.onCameraChange?.(cameraDirection.clone());
+
+			console.log(`Camera position: ${cameraDirection.toArray()}`);
 		};
 		orbitControls.addEventListener("change", emitCameraDirection);
 		emitCameraDirection();
@@ -283,9 +280,6 @@ export function PulsarModel(
 			renderScene();
 		};
 
-		const direction1 = new THREE.Vector3();
-		const direction2 = new THREE.Vector3();
-
 		// Animation
 		const animate = () => {
 			if (pulsarParams.isAnimating) {
@@ -294,14 +288,6 @@ export function PulsarModel(
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 				pulsarParams.onPulsarPhaseChange?.(pulsarParams.pulsarPhase);
-
-				pulsarBeam1.getWorldDirection(direction1);
-				pulsar
-					.getObjectByName("pulsarBeamArrowHelper")
-					?.getWorldDirection(direction2);
-				console.log(`Beam direction: ${direction1.toArray()}
-Arrow helper direction: ${direction2.toArray()}
-pulsarBeamDirection: ${pulsarBeamDirection(pulsarParams.pulsarPhase, pulsarParams.pulsarAxialTilt, pulsarParams.pulsarBeamLatitude).toArray()}`);
 			}
 
 			orbitControls.update();
@@ -464,6 +450,28 @@ pulsarBeamDirection: ${pulsarBeamDirection(pulsarParams.pulsarPhase, pulsarParam
 			pulsarParamsRef.current.onPulsarPhaseChange = onPulsarPhaseChange;
 		}
 	}, [onPulsarPhaseChange]);
+
+	useEffect(() => {
+		const { scene } = modelRef.current ?? {};
+
+		if (scene) {
+			const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
+			pulsarBeam1.updateWorldMatrix(true, false);
+			pulsarBeam1.getWorldQuaternion(pulsarBeamWorldQuaternion);
+			pulsarBeamWorldDirection
+				.copy(pulsarBeamLocalDirection)
+				.applyQuaternion(pulsarBeamWorldQuaternion);
+
+			const pulsarBeamDirectionCalc = pulsarBeamDirection(
+				pulsarPhase,
+				pulsarAxialTilt,
+				pulsarBeamLatitude,
+			);
+
+			console.log(`getWorldDirection direction: ${pulsarBeamWorldDirection.toArray()}
+pulsarBeamDirection direction: ${pulsarBeamDirectionCalc}`);
+		}
+	}, [pulsarPhase, pulsarAxialTilt, pulsarBeamLatitude]);
 
 	return <div id="pulsar-model" ref={mountRef} />;
 }

@@ -7,8 +7,8 @@ const createPlotlyComponent =
 const Plot = createPlotlyComponent(Plotly);
 
 import type * as THREE from "three";
+import { range } from "../utils";
 import type { PulsarModelProps } from "./PulsarModel";
-import { range } from "./utils";
 
 const omega = Math.PI / 24;
 const cameraAngle = Math.PI / 2;
