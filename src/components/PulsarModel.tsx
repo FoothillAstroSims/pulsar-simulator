@@ -4,12 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-
-// Parameters and methods to expose to the parent node
-export interface PulsarModelRef {
-	camera: THREE.Camera | undefined;
-	resetCamera: () => void;
-}
+import { pulsarBeamDirection } from "./utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
@@ -19,7 +14,13 @@ export interface PulsarModelProps {
 	pulsarAxialTilt: number;
 	pulsarBeamLatitude: number;
 	pulsarBeamAngle: number;
-	onPulsarPhaseChange?: (arg0: number) => void;
+	onPulsarPhaseChange?: (phase: number) => void;
+	onCameraChange?: (dir: THREE.Vector3) => void;
+}
+
+// Parameters and methods to expose to the parent node
+export interface PulsarModelRef {
+	resetCamera: () => void;
 }
 
 // Default pulsar parameter values
@@ -48,6 +49,12 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
+const cameraPositionDefault: [number, number, number] = [
+	pulsarBodyRadius * 2,
+	pulsarBodyRadius * 2,
+	pulsarBodyRadius * 2,
+];
+
 export function PulsarModel(
 	props: PulsarModelProps & {
 		ref: React.RefObject<PulsarModelRef | null>;
@@ -62,6 +69,7 @@ export function PulsarModel(
 		pulsarBeamLatitude,
 		pulsarBeamAngle,
 		onPulsarPhaseChange,
+		onCameraChange,
 	} = props;
 
 	const mountRef = useRef<HTMLDivElement | null>(null);
@@ -70,19 +78,18 @@ export function PulsarModel(
 		camera: THREE.Camera;
 		renderer: THREE.WebGLRenderer;
 		orbitControls: OrbitControls;
-	} | null>(null);
-	const controlsAnimationRef = useRef<{
 		startAnimation: () => void;
 		stopAnimation: () => void;
 	} | null>(null);
 	const pulsarParamsRef = useRef<PulsarModelProps>({
-		isAnimating: isAnimating ?? isAnimatingDefault,
-		pulsarPhase: pulsarPhase ?? pulsarPhaseDefault,
-		pulsarPeriod: pulsarPeriod ?? pulsarPeriodDefault,
-		pulsarAxialTilt: pulsarAxialTilt ?? pulsarAxialTiltDefault,
-		pulsarBeamLatitude: pulsarBeamLatitude ?? pulsarBeamLatitudeDefault,
-		pulsarBeamAngle: pulsarBeamAngle ?? pulsarBeamAngleDefault,
+		isAnimating: isAnimating,
+		pulsarPhase: pulsarPhase,
+		pulsarPeriod: pulsarPeriod,
+		pulsarAxialTilt: pulsarAxialTilt,
+		pulsarBeamLatitude: pulsarBeamLatitude,
+		pulsarBeamAngle: pulsarBeamAngle,
 		onPulsarPhaseChange: onPulsarPhaseChange,
+		onCameraChange: onCameraChange,
 	});
 
 	// Initialize Three.js pulsar model and animation
@@ -102,10 +109,10 @@ export function PulsarModel(
 		// Scene
 		const scene = new THREE.Scene();
 
-		// // Axes
-		// const axesHelper = new THREE.AxesHelper(100);
-		// axesHelper.name = "axesHelper";
-		// scene.add(axesHelper);
+		// Axes
+		const axesHelper = new THREE.AxesHelper(100);
+		axesHelper.name = "axesHelper";
+		scene.add(axesHelper);
 
 		// Lighting
 		const lightAmbient = new THREE.AmbientLight(0xffffff, 0.2);
@@ -114,11 +121,7 @@ export function PulsarModel(
 
 		const lightDirectional = new THREE.DirectionalLight(0xffffff, 5);
 		lightDirectional.name = "lightDirectional";
-		lightDirectional.position.set(
-			pulsarBodyRadius * 2,
-			pulsarBodyRadius * 2,
-			pulsarBodyRadius * 2,
-		);
+		lightDirectional.position.set(...cameraPositionDefault);
 		lightDirectional.target.position.set(0, 0, 0);
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
@@ -213,13 +216,17 @@ export function PulsarModel(
 			Math.PI / 2 - pulsarParams.pulsarBeamLatitude,
 		);
 
+		// pulsarBeam1.material = pulsarBeam1.material.clone();
+		// pulsarBeam1.material.color.set("red");
+
 		const pulsarBeamArrowHelper = new THREE.ArrowHelper(
 			new THREE.Vector3(0, 1, 0),
 			new THREE.Vector3(0, 0, 0),
 			pulsarBodyRadius * 2,
 			"red",
 		);
-		pulsarBeam1.add(pulsarBeamArrowHelper);
+		pulsarBeamArrowHelper.name = "pulsarBeamArrowHelper";
+		pulsarBeam2.add(pulsarBeamArrowHelper);
 
 		const pulsarBeams = new THREE.Group();
 		pulsarBeams.name = "pulsarBeams";
@@ -255,16 +262,16 @@ export function PulsarModel(
 		orbitControls.rotateSpeed = 2;
 		orbitControls.listenToKeyEvents(window);
 		orbitControls.addEventListener("change", renderScene);
+
+		const cameraDirection = new THREE.Vector3();
+		const emitCameraDirection = () => {
+			cameraDirection.copy(camera.position).normalize();
+			pulsarParams.onCameraChange?.(cameraDirection.clone());
+		};
+		orbitControls.addEventListener("change", emitCameraDirection);
+		emitCameraDirection();
 		orbitControls.update();
 		// TODO: Create on-screen buttons to rotate camera
-
-		// Scene reference to access scene elements outside of initial rendering
-		modelRef.current = {
-			scene,
-			camera,
-			renderer,
-			orbitControls,
-		};
 
 		// Handling window resizing
 		const handleResize = () => {
@@ -276,6 +283,9 @@ export function PulsarModel(
 			renderScene();
 		};
 
+		const direction1 = new THREE.Vector3();
+		const direction2 = new THREE.Vector3();
+
 		// Animation
 		const animate = () => {
 			if (pulsarParams.isAnimating) {
@@ -285,9 +295,13 @@ export function PulsarModel(
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 				pulsarParams.onPulsarPhaseChange?.(pulsarParams.pulsarPhase);
 
-				const direction = new THREE.Vector3();
-				pulsarBeam1.getWorldDirection(direction);
-				console.log(`Beam direction: ${direction.toArray()}`);
+				pulsarBeam1.getWorldDirection(direction1);
+				pulsar
+					.getObjectByName("pulsarBeamArrowHelper")
+					?.getWorldDirection(direction2);
+				console.log(`Beam direction: ${direction1.toArray()}
+Arrow helper direction: ${direction2.toArray()}
+pulsarBeamDirection: ${pulsarBeamDirection(pulsarParams.pulsarPhase, pulsarParams.pulsarAxialTilt, pulsarParams.pulsarBeamLatitude).toArray()}`);
 			}
 
 			orbitControls.update();
@@ -308,7 +322,15 @@ export function PulsarModel(
 			orbitControls.update();
 		};
 
-		controlsAnimationRef.current = { startAnimation, stopAnimation };
+		// Scene reference to access and manipulate scene elements outside of initial rendering
+		modelRef.current = {
+			scene,
+			camera,
+			renderer,
+			orbitControls,
+			startAnimation,
+			stopAnimation,
+		};
 
 		// Add the rendered canvas to the DOM and start animation
 		mountNode.appendChild(renderer.domElement);
@@ -319,6 +341,7 @@ export function PulsarModel(
 		return () => {
 			cancelAnimationFrame(frameID);
 			orbitControls.removeEventListener("change", renderScene);
+			orbitControls.removeEventListener("change", emitCameraDirection);
 			window.removeEventListener("resize", handleResize);
 			mountNode.removeChild(renderer.domElement);
 		};
@@ -332,7 +355,6 @@ export function PulsarModel(
 			resetCamera: () => {
 				modelRef.current?.orbitControls.reset();
 			},
-			camera: modelRef.current?.camera,
 		}),
 		[],
 	);
@@ -342,10 +364,10 @@ export function PulsarModel(
 		pulsarParamsRef.current.isAnimating = isAnimating;
 
 		if (isAnimating) {
-			controlsAnimationRef.current?.startAnimation();
+			modelRef.current?.startAnimation();
 			console.log("Animation started");
 		} else {
-			controlsAnimationRef.current?.stopAnimation();
+			modelRef.current?.stopAnimation();
 			console.log("Animation stopped");
 		}
 	}, [isAnimating]);

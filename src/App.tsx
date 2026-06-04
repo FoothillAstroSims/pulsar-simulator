@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import PulsarGraph from "./components/PulsarGraph";
+import * as THREE from "three";
 import type { PulsarModelRef } from "./components/PulsarModel";
 import {
 	isAnimatingDefault,
@@ -25,6 +25,9 @@ export default function App() {
 	);
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
+	);
+	const [pulsarModelCameraDirection, setPulsarModelCameraDirection] = useState(
+		() => new THREE.Vector3(0, 0, 1),
 	);
 
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
@@ -74,9 +77,6 @@ export default function App() {
 		<>
 			<div>
 				<p>Test</p>
-			</div>
-			<div>
-				<PulsarGraph />
 			</div>
 			<div id="pulsarParameters">
 				<input type="text" />
@@ -187,6 +187,7 @@ export default function App() {
 					pulsarBeamLatitude={pulsarBeamLatitude}
 					pulsarBeamAngle={pulsarBeamAngle}
 					onPulsarPhaseChange={setPulsarPhase}
+					onCameraChange={setPulsarModelCameraDirection}
 				/>
 			</div>
 		</>
