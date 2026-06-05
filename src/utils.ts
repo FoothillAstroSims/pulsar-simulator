@@ -33,12 +33,14 @@ export function pulsarBeamDirection(
 
 // Formula for pulsar beam intensity given the beam direction, camera/detector direction, and the beam angle
 export function pulsarBeamIntensity(
-	pulsarBeamDirection: THREE.Vector3,
-	cameraDirection: THREE.Vector3,
+	pulsarBeamDirection: [number, number, number],
+	cameraDirection: [number, number, number],
 	pulsarBeamAngle: number,
 ): number {
 	const pulsarCameraAngle = Math.acos(
-		pulsarBeamDirection.normalize().dot(cameraDirection.normalize()),
+		new THREE.Vector3(...pulsarBeamDirection)
+			.normalize()
+			.dot(new THREE.Vector3(...cameraDirection).normalize()),
 	);
 
 	return pulsarCameraAngle <= pulsarBeamAngle ||

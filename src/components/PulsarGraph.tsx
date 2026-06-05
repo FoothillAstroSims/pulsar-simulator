@@ -6,9 +6,12 @@ const createPlotlyComponent =
 	factoryImport;
 const Plot = createPlotlyComponent(Plotly);
 
-import type * as THREE from "three";
 import { range } from "../utils";
 import type { PulsarModelProps } from "./PulsarModel";
+
+type PulsarPlotParams = PulsarModelProps & {
+	cameraDirection: [number, number, number];
+};
 
 const omega = Math.PI / 24;
 const cameraAngle = Math.PI / 2;
@@ -19,12 +22,8 @@ const yAxis = xAxis.map((x) => {
 		: 0;
 });
 
-export function PulsarPlotTime(
-	props: PulsarModelProps & {
-		cameraDirection: THREE.Vector3;
-	},
-) {
+export function PulsarPlotTime(props: PulsarPlotParams) {
 	return;
 }
 
-export function PulsarPlotPhase() {}
+export function PulsarPlotPhase(props: PulsarPlotParams) {}

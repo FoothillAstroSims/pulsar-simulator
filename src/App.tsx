@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import * as THREE from "three";
 import type { PulsarModelRef } from "./components/PulsarModel";
 import {
 	isAnimatingDefault,
+	orbitControlsEnabledDefault,
 	PulsarModel,
 	pulsarAxisInclinationXDefault,
 	pulsarAxisInclinationYDefault,
@@ -22,7 +22,6 @@ const pulsarAxisInclinationDefault: [number, number, number] = [
 ];
 
 export default function App() {
-	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
 	const [pulsarPeriod, setPulsarPeriod] = useState(pulsarPeriodDefault);
 	const [pulsarBeamLatitude, setPulsarBeamLatitude] = useState(
@@ -34,9 +33,13 @@ export default function App() {
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
-	const [pulsarModelCameraDirection, setPulsarModelCameraDirection] = useState(
-		() => new THREE.Vector3(0, 0, 1),
+	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
+	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
+		orbitControlsEnabledDefault,
 	);
+	const [pulsarModelCameraDirection, setPulsarModelCameraDirection] = useState([
+		0, 0, 0,
+	]);
 
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
@@ -91,17 +94,15 @@ export default function App() {
 				<button type="button" onClick={() => setIsAnimating(!isAnimating)}>
 					{isAnimating ? "Stop" : "Start"}
 				</button>
-
 				<button
 					type="button"
 					onClick={() => {
 						pulsarModelRef.current?.resetCamera();
-						console.log("Camera reset");
+						// console.log("Camera reset");
 					}}
 				>
 					Reset camera
 				</button>
-
 				<button
 					type="button"
 					disabled={isAnimating}
@@ -112,14 +113,20 @@ export default function App() {
 							setPulsarAxisInclination(pulsarAxisInclinationDefault);
 							setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
 							setPulsarBeamAngle(pulsarBeamAngleDefault);
-							console.log("Pulsar parameters reset");
+							// console.log("Pulsar parameters reset");
 						}
 					}}
 				>
 					Reset parameters
 				</button>
+				<label>
+					<input
+						type="checkbox"
+						onClick={() => setOrbitControlsEnabled(!orbitControlsEnabled)}
+					/>
+					Toggle camera control
+				</label>
 				<br />
-
 				<PulsarParameterInput
 					name="pulsarPhase"
 					label="Pulsar phase"
@@ -130,9 +137,7 @@ export default function App() {
 					disabled={isAnimating}
 					onChange={(e) => {
 						setPulsarPhase(parseFloat(e.target.value));
-						if (!isAnimating) {
-							console.log(`Pulsar phase: ${e.target.value}`);
-						}
+						// if (!isAnimating) console.log(`Pulsar phase: ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -145,7 +150,7 @@ export default function App() {
 					value={pulsarPeriod}
 					onChange={(e) => {
 						setPulsarPeriod(parseFloat(e.target.value));
-						console.log(`Pulsar period: ${e.target.value}`);
+						// console.log(`Pulsar period: ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -163,7 +168,7 @@ export default function App() {
 							pulsarAxisInclination[1],
 							pulsarAxisInclination[2],
 						]);
-						console.log(`Pulsar axis inclination X: ${e.target.value}`);
+						// console.log(`Pulsar axis inclination X: ${e.target.value}`);
 					}}
 				/>
 				<PulsarParameterInput
@@ -179,7 +184,7 @@ export default function App() {
 							parseFloat(e.target.value),
 							pulsarAxisInclination[2],
 						]);
-						console.log(`Pulsar axis inclination Y: ${e.target.value}`);
+						// console.log(`Pulsar axis inclination Y: ${e.target.value}`);
 					}}
 				/>
 				<PulsarParameterInput
@@ -195,7 +200,7 @@ export default function App() {
 							pulsarAxisInclination[1],
 							parseFloat(e.target.value),
 						]);
-						console.log(`Pulsar axis inclination Z: ${e.target.value}`);
+						// console.log(`Pulsar axis inclination Z: ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -208,7 +213,7 @@ export default function App() {
 					value={pulsarBeamLatitude}
 					onChange={(e) => {
 						setPulsarBeamLatitude(parseFloat(e.target.value));
-						console.log(`Pulsar beam latitude: ${e.target.value}`);
+						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -221,20 +226,22 @@ export default function App() {
 					value={pulsarBeamAngle}
 					onChange={(e) => {
 						setPulsarBeamAngle(parseFloat(e.target.value));
-						console.log(`Pulsar beam angle: ${e.target.value}`);
+						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
 			</div>
 			<div style={{ height: "80vh" }}>
 				<PulsarModel
 					ref={pulsarModelRef}
-					isAnimating={isAnimating}
 					pulsarPhase={pulsarPhase}
 					pulsarPeriod={pulsarPeriod}
 					pulsarAxisInclination={pulsarAxisInclination}
 					pulsarBeamLatitude={pulsarBeamLatitude}
 					pulsarBeamAngle={pulsarBeamAngle}
+					isAnimating={isAnimating}
+					orbitControlsEnabled={orbitControlsEnabled}
 					onPulsarPhaseChange={setPulsarPhase}
+					onPulsarAxisChange={setPulsarAxisInclination}
 					onCameraChange={setPulsarModelCameraDirection}
 				/>
 			</div>
