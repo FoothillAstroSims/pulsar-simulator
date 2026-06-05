@@ -5,7 +5,9 @@ import type { PulsarModelRef } from "./components/PulsarModel";
 import {
 	isAnimatingDefault,
 	PulsarModel,
-	pulsarAxialTiltDefault,
+	pulsarAxisInclinationXDefault,
+	pulsarAxisInclinationYDefault,
+	pulsarAxisInclinationZDefault,
 	pulsarBeamAngleDefault,
 	pulsarBeamLatitudeDefault,
 	pulsarPeriodDefault,
@@ -13,16 +15,22 @@ import {
 } from "./components/PulsarModel";
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
 
+const pulsarAxisInclinationDefault: [number, number, number] = [
+	pulsarAxisInclinationXDefault,
+	pulsarAxisInclinationYDefault,
+	pulsarAxisInclinationZDefault,
+];
+
 export default function App() {
 	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
 	const [pulsarPeriod, setPulsarPeriod] = useState(pulsarPeriodDefault);
-	const [pulsarAxialTilt, setPulsarAxialTilt] = useState(
-		pulsarAxialTiltDefault,
-	);
 	const [pulsarBeamLatitude, setPulsarBeamLatitude] = useState(
 		pulsarBeamLatitudeDefault,
 	);
+	const [pulsarAxisInclination, setPulsarAxisInclination] = useState<
+		[number, number, number]
+	>(pulsarAxisInclinationDefault);
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
@@ -96,13 +104,16 @@ export default function App() {
 
 				<button
 					type="button"
+					disabled={isAnimating}
 					onClick={() => {
-						setPulsarPhase(pulsarPhaseDefault);
-						setPulsarPeriod(pulsarPeriodDefault);
-						setPulsarAxialTilt(pulsarAxialTiltDefault);
-						setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
-						setPulsarBeamAngle(pulsarBeamAngleDefault);
-						console.log("Pulsar parameters reset");
+						if (!isAnimating) {
+							setPulsarPhase(pulsarPhaseDefault);
+							setPulsarPeriod(pulsarPeriodDefault);
+							setPulsarAxisInclination(pulsarAxisInclinationDefault);
+							setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
+							setPulsarBeamAngle(pulsarBeamAngleDefault);
+							console.log("Pulsar parameters reset");
+						}
 					}}
 				>
 					Reset parameters
@@ -138,16 +149,53 @@ export default function App() {
 					}}
 				/>
 				<br />
+				Pulsar inclination{" "}
 				<PulsarParameterInput
-					name="pulsarAxialTilt"
-					label="Pulsar axial tilt"
-					min={0.0}
-					max={Math.PI / 4}
+					name="pulsarAxisInclinationX"
+					label="X"
+					min={0}
+					max={Math.PI}
 					step={0.001}
-					value={pulsarAxialTilt}
+					value={pulsarAxisInclination[0]}
 					onChange={(e) => {
-						setPulsarAxialTilt(parseFloat(e.target.value));
-						console.log(`Pulsar axial tilt: ${e.target.value}`);
+						setPulsarAxisInclination([
+							parseFloat(e.target.value),
+							pulsarAxisInclination[1],
+							pulsarAxisInclination[2],
+						]);
+						console.log(`Pulsar axis inclination X: ${e.target.value}`);
+					}}
+				/>
+				<PulsarParameterInput
+					name="pulsarAxisInclinationY"
+					label="Y"
+					min={0}
+					max={Math.PI}
+					step={0.001}
+					value={pulsarAxisInclination[1]}
+					onChange={(e) => {
+						setPulsarAxisInclination([
+							pulsarAxisInclination[0],
+							parseFloat(e.target.value),
+							pulsarAxisInclination[2],
+						]);
+						console.log(`Pulsar axis inclination Y: ${e.target.value}`);
+					}}
+				/>
+				<PulsarParameterInput
+					name="pulsarInclinationZ"
+					label="Z"
+					min={0}
+					max={Math.PI}
+					step={0.001}
+					value={pulsarAxisInclination[2]}
+					onChange={(e) => {
+						setPulsarAxisInclination([
+							pulsarAxisInclination[0],
+							pulsarAxisInclination[1],
+							parseFloat(e.target.value),
+						]);
+						console.log(`Pulsar axis inclination Z: ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -183,7 +231,7 @@ export default function App() {
 					isAnimating={isAnimating}
 					pulsarPhase={pulsarPhase}
 					pulsarPeriod={pulsarPeriod}
-					pulsarAxialTilt={pulsarAxialTilt}
+					pulsarAxisInclination={pulsarAxisInclination}
 					pulsarBeamLatitude={pulsarBeamLatitude}
 					pulsarBeamAngle={pulsarBeamAngle}
 					onPulsarPhaseChange={setPulsarPhase}

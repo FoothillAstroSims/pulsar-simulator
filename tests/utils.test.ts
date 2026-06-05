@@ -1,3 +1,4 @@
+import type * as THREE from "three";
 import { describe, expect, expectTypeOf, test } from "vitest";
 import * as utils from "../src/utils";
 
@@ -53,9 +54,9 @@ describe("pulsarBeamDirection", () => {
 		expectTypeOf(utils.pulsarBeamDirection).parameter(0).toBeNumber();
 		expectTypeOf(utils.pulsarBeamDirection).parameter(1).toBeNumber();
 		expectTypeOf(utils.pulsarBeamDirection).parameter(2).toBeNumber();
-		expectTypeOf(utils.pulsarBeamDirection).returns.toEqualTypeOf<
-			[number, number, number]
-		>();
+		expectTypeOf(
+			utils.pulsarBeamDirection,
+		).returns.toEqualTypeOf<THREE.Vector3>();
 	});
 
 	test.each(pulsarDirectionCases)(
@@ -66,7 +67,7 @@ describe("pulsarBeamDirection", () => {
 				pulsarPhase,
 				pulsarAxialTilt,
 				pulsarBeamLatitude,
-			);
+			).toArray();
 
 			expect(Math.abs(dir[0] - b[0])).toBeLessThan(expected);
 			expect(Math.abs(dir[1] - b[1])).toBeLessThan(expected);

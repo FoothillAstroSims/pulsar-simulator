@@ -1,4 +1,4 @@
-import type * as THREE from "three";
+import * as THREE from "three";
 
 // Generate a range of values
 export function range(start: number, stop: number, step: number): number[] {
@@ -17,8 +17,8 @@ export function pulsarBeamDirection(
 	pulsarPhase: PulsarBeamDirectionParams["pulsarPhase"],
 	pulsarAxialTilt: PulsarBeamDirectionParams["pulsarAxialTilt"],
 	pulsarBeamLatitude: PulsarBeamDirectionParams["pulsarBeamLatitude"],
-): [number, number, number] {
-	return [
+): THREE.Vector3 {
+	return new THREE.Vector3(
 		-Math.cos(pulsarBeamLatitude) *
 			Math.cos(pulsarPhase) *
 			Math.cos(pulsarAxialTilt) -
@@ -28,7 +28,7 @@ export function pulsarBeamDirection(
 			Math.sin(pulsarAxialTilt) +
 			Math.sin(pulsarBeamLatitude) * Math.cos(pulsarAxialTilt),
 		Math.cos(pulsarBeamLatitude) * Math.sin(pulsarPhase),
-	];
+	);
 }
 
 // Formula for pulsar beam intensity given the beam direction, camera/detector direction, and the beam angle

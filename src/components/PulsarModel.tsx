@@ -4,18 +4,18 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { pulsarBeamDirection } from "../utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
 	isAnimating: boolean;
 	pulsarPhase: number;
 	pulsarPeriod: number;
-	pulsarAxialTilt: number;
+	pulsarAxisInclination: [number, number, number];
 	pulsarBeamLatitude: number;
 	pulsarBeamAngle: number;
 	onPulsarPhaseChange?: (phase: number) => void;
 	onCameraChange?: (dir: THREE.Vector3) => void;
+	onPulsarAxisChange?: (dir: THREE.Vector3) => void;
 }
 
 // Parameters and methods to expose to the parent node
@@ -27,7 +27,9 @@ export interface PulsarModelRef {
 export const isAnimatingDefault = true;
 export const pulsarPhaseDefault = 0.0;
 export const pulsarPeriodDefault = 50.0;
-export const pulsarAxialTiltDefault = 0.0;
+export const pulsarAxisInclinationXDefault = 0.0;
+export const pulsarAxisInclinationYDefault = 0.0;
+export const pulsarAxisInclinationZDefault = 0.0;
 export const pulsarBeamLatitudeDefault = 0.0;
 export const pulsarBeamAngleDefault = Math.PI / 24;
 
@@ -49,15 +51,11 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
-const cameraPositionDefault: [number, number, number] = [
+const lightDirectionDefault: [number, number, number] = [
 	pulsarBodyRadius * 2,
 	pulsarBodyRadius * 2,
 	pulsarBodyRadius * 2,
 ];
-
-const pulsarBeamLocalDirection = new THREE.Vector3(0, -1, 0);
-const pulsarBeamWorldDirection = new THREE.Vector3();
-const pulsarBeamWorldQuaternion = new THREE.Quaternion();
 
 export function PulsarModel(
 	props: PulsarModelProps & {
@@ -69,7 +67,7 @@ export function PulsarModel(
 		isAnimating,
 		pulsarPhase,
 		pulsarPeriod,
-		pulsarAxialTilt,
+		pulsarAxisInclination,
 		pulsarBeamLatitude,
 		pulsarBeamAngle,
 		onPulsarPhaseChange,
@@ -89,7 +87,7 @@ export function PulsarModel(
 		isAnimating: isAnimating,
 		pulsarPhase: pulsarPhase,
 		pulsarPeriod: pulsarPeriod,
-		pulsarAxialTilt: pulsarAxialTilt,
+		pulsarAxisInclination: pulsarAxisInclination,
 		pulsarBeamLatitude: pulsarBeamLatitude,
 		pulsarBeamAngle: pulsarBeamAngle,
 		onPulsarPhaseChange: onPulsarPhaseChange,
@@ -125,7 +123,7 @@ export function PulsarModel(
 
 		const lightDirectional = new THREE.DirectionalLight(0xffffff, 5);
 		lightDirectional.name = "lightDirectional";
-		lightDirectional.position.set(...cameraPositionDefault);
+		lightDirectional.position.set(...lightDirectionDefault);
 		lightDirectional.target.position.set(0, 0, 0);
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
@@ -232,11 +230,13 @@ export function PulsarModel(
 		pulsar.rotation.y = pulsarParams.pulsarPhase;
 
 		// Wrapper to help with axial tilt
-		const pulsarAxialTiltWrapper = new THREE.Group();
-		pulsarAxialTiltWrapper.name = "pulsarAxialTiltWrapper";
-		pulsarAxialTiltWrapper.add(pulsar);
-		pulsarAxialTiltWrapper.rotation.set(0, 0, pulsarParams.pulsarAxialTilt);
-		scene.add(pulsarAxialTiltWrapper);
+		const pulsarAxisDirectionWrapper = new THREE.Group();
+		pulsarAxisDirectionWrapper.name = "pulsarAxisDirectionWrapper";
+		pulsarAxisDirectionWrapper.add(pulsar);
+		pulsarAxisDirectionWrapper.rotation.set(
+			...pulsarParams.pulsarAxisInclination,
+		);
+		scene.add(pulsarAxisDirectionWrapper);
 
 		// Camera
 		const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
@@ -400,23 +400,23 @@ export function PulsarModel(
 		}
 	}, [pulsarBeamLatitude]);
 
-	// Change pulsar axial tilt
+	// Change pulsar axis of rotation
 	useEffect(() => {
-		if (pulsarAxialTilt !== undefined) {
-			pulsarParamsRef.current.pulsarAxialTilt = pulsarAxialTilt;
+		if (pulsarAxisInclination !== undefined) {
+			pulsarParamsRef.current.pulsarAxisInclination = pulsarAxisInclination;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
 			if (scene && camera && renderer) {
-				const pulsarAxialTiltWrapper = scene.getObjectByName(
-					"pulsarAxialTiltWrapper",
+				const pulsarAxisDirectionWrapper = scene.getObjectByName(
+					"pulsarAxisDirectionWrapper",
 				) as THREE.Group;
-				pulsarAxialTiltWrapper.rotation.z = pulsarAxialTilt;
+				pulsarAxisDirectionWrapper.rotation.set(...pulsarAxisInclination);
 
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarAxialTilt]);
+	}, [pulsarAxisInclination]);
 
 	// Change pulsar beam angle
 	useEffect(() => {
@@ -452,26 +452,10 @@ export function PulsarModel(
 	}, [onPulsarPhaseChange]);
 
 	useEffect(() => {
-		const { scene } = modelRef.current ?? {};
-
-		if (scene) {
-			const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
-			pulsarBeam1.updateWorldMatrix(true, false);
-			pulsarBeam1.getWorldQuaternion(pulsarBeamWorldQuaternion);
-			pulsarBeamWorldDirection
-				.copy(pulsarBeamLocalDirection)
-				.applyQuaternion(pulsarBeamWorldQuaternion);
-
-			const pulsarBeamDirectionCalc = pulsarBeamDirection(
-				pulsarPhase,
-				pulsarAxialTilt,
-				pulsarBeamLatitude,
-			);
-
-			console.log(`getWorldDirection direction: ${pulsarBeamWorldDirection.toArray()}
-pulsarBeamDirection direction: ${pulsarBeamDirectionCalc}`);
+		if (onCameraChange !== undefined) {
+			pulsarParamsRef.current.onCameraChange = onCameraChange;
 		}
-	}, [pulsarPhase, pulsarAxialTilt, pulsarBeamLatitude]);
+	}, [onCameraChange]);
 
 	return <div id="pulsar-model" ref={mountRef} />;
 }
