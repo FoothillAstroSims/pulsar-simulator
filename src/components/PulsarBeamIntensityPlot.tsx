@@ -1,6 +1,7 @@
 import Plotly from "plotly.js-dist-min";
 import factoryImport from "react-plotly.js/factory";
 
+// Hack to allow Plotly's Plot component to work with Vite
 const createPlotlyComponent =
 	(factoryImport as unknown as { default?: typeof factoryImport }).default ??
 	factoryImport;
@@ -11,6 +12,7 @@ import { pulsarBeamDirection, pulsarBeamIntensity, range } from "../utils";
 export const pulsarPhaseStep = 0.001;
 const x = range(0, 2 * Math.PI, pulsarPhaseStep);
 
+// Phase-based pulsar beam intensity plot
 export function PulsarBeamIntensityPlotPhase(props: {
 	pulsarPhase: number;
 	pulsarAxisInclination: [number, number, number];

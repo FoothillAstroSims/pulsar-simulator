@@ -3,7 +3,11 @@ import * as utils from "../src/utils";
 
 const tolerance = 0.01;
 const pulsarDirectionCases: [
-	utils.PulsarBeamDirectionParams,
+	{
+		pulsarPhase: number;
+		pulsarAxisInclination: [number, number, number];
+		pulsarBeamLatitude: number;
+	},
 	[number, number, number],
 	number,
 ][] = [
@@ -54,7 +58,7 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [1, 1, 1],
 			pulsarBeamLatitude: 1,
 		},
-		[0.680, -0.195, -0.707],
+		[0.68, -0.195, -0.707],
 		tolerance,
 	],
 ];

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
@@ -76,6 +76,17 @@ export default function App() {
 		orbitControlsEnabledDefault,
 	);
 
+	const resetPulsarParameters = useCallback(() => {
+		if (!isAnimating) {
+			setPulsarPhase(pulsarPhaseDefault);
+			setPulsarPeriod(pulsarPeriodDefault);
+			setPulsarAxisInclination(pulsarAxisInclinationDefault);
+			setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
+			setPulsarBeamAngle(pulsarBeamAngleDefault);
+			// console.log("Pulsar parameters reset");
+		}
+	}, [isAnimating]);
+
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
 	// Register keyboard event handlers
@@ -106,17 +117,34 @@ export default function App() {
 			)
 				return;
 
-			if (e.key === "r" || e.key === "R") {
+			if (e.key === "c" || e.key === "C") {
 				pulsarModelRef.current?.resetCamera();
 			}
 		};
 		window.addEventListener("keydown", resetCameraHandler);
 
+		// Reset parameters
+		const resetPulsarParametersHandler = (e: KeyboardEvent) => {
+			const target = e.target;
+			if (
+				target &&
+				target instanceof HTMLInputElement &&
+				(target.type === "text" || target.type === "textarea")
+			)
+				return;
+
+			if (e.key === "r" || e.key === "R") {
+				resetPulsarParameters();
+			}
+		};
+		window.addEventListener("keydown", resetPulsarParametersHandler);
+
 		return () => {
 			window.removeEventListener("keydown", isAnimatingHandler);
 			window.removeEventListener("keydown", resetCameraHandler);
+			window.removeEventListener("keydown", resetPulsarParametersHandler);
 		};
-	}, []);
+	}, [resetPulsarParameters]);
 
 	return (
 		// TODO: Implement pulsar beam intensity graph, and hook it up to sync with the model
@@ -142,26 +170,17 @@ export default function App() {
 				<button
 					type="button"
 					disabled={isAnimating}
-					onClick={() => {
-						if (!isAnimating) {
-							setPulsarPhase(pulsarPhaseDefault);
-							setPulsarPeriod(pulsarPeriodDefault);
-							setPulsarAxisInclination(pulsarAxisInclinationDefault);
-							setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
-							setPulsarBeamAngle(pulsarBeamAngleDefault);
-							// console.log("Pulsar parameters reset");
-						}
-					}}
+					onClick={() => resetPulsarParameters()}
 				>
 					Reset parameters
 				</button>
 				<label>
 					<input
 						type="checkbox"
-						checked={orbitControlsEnabled}
+						checked={!orbitControlsEnabled}
 						onChange={() => setOrbitControlsEnabled(!orbitControlsEnabled)}
 					/>
-					Toggle camera control
+					Lock camera
 				</label>
 				<br />
 				<PulsarParameterInput
@@ -269,6 +288,7 @@ export default function App() {
 					}}
 				/>
 			</div>
+
 			<div style={{ height: "75vh", display: "flex" }}>
 				<div style={{ width: "50%", flex: 1 }}>
 					<PulsarModel
@@ -288,6 +308,7 @@ export default function App() {
 				</div>
 				<div style={{ flex: 1 }}>
 					<PulsarBeamIntensityPlotPhase
+						pulsarPhase={0}
 						pulsarAxisInclination={pulsarAxisInclination}
 						pulsarBeamLatitude={pulsarBeamLatitude}
 						cameraDirection={cameraPosition}

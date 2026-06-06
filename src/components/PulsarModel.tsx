@@ -28,7 +28,7 @@ export interface PulsarModelRef {
 
 // Default pulsar parameter values
 export const pulsarPhaseDefault = 0.0;
-export const pulsarPeriodDefault = 25.0;
+export const pulsarPeriodDefault = 40.0;
 export const pulsarAxisInclinationXDefault = 0.0;
 export const pulsarAxisInclinationYDefault = 0.0;
 export const pulsarAxisInclinationZDefault = 0.0;
@@ -279,16 +279,17 @@ export function PulsarModel(
 		orbitControls.rotateSpeed = 2;
 		orbitControls.listenToKeyEvents(window);
 		orbitControls.addEventListener("change", renderScene);
-		orbitControls.enabled = pulsarParams.orbitControlsEnabled;
 
 		// Report the camera position to the parent node using the provided callback function
 		const cameraPosition = new THREE.Vector3();
 		const reportCameraPosition = () => {
 			cameraPosition.copy(camera.position);
 			pulsarParams.onCameraPositionChange?.(cameraPosition.clone().toArray());
-			// console.log(`Camera position: ${cameraPosition.toArray()}`);
+			console.log(`Camera position: ${cameraPosition.toArray()}`);
 		};
 		orbitControls.addEventListener("change", reportCameraPosition);
+
+		orbitControls.enabled = pulsarParams.orbitControlsEnabled;
 		orbitControls.update();
 		// TODO: Create on-screen buttons to rotate camera
 
@@ -398,10 +399,16 @@ export function PulsarModel(
 	useEffect(() => {
 		pulsarParamsRef.current.cameraPosition = cameraPosition;
 
-		const { scene, camera, renderer, orbitControls } = modelRef.current ?? {};
+		const { scene, camera, renderer } = modelRef.current ?? {};
 
-		if (scene && camera && renderer && orbitControls) {
+		if (
+			!pulsarParamsRef.current.orbitControlsEnabled &&
+			scene &&
+			camera &&
+			renderer
+		) {
 			camera.position.set(...cameraPosition);
+			console.log("test");
 			renderer.render(scene, camera);
 		}
 	}, [cameraPosition]);
@@ -493,10 +500,15 @@ export function PulsarModel(
 		if (scene) {
 			const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
 			console.log(
-				`Pulsar beam direction: ${getMeshDirection(pulsarBeam1, [0, 1, 0]).map((x) => x.toFixed(3))}`,
+				`Pulsar beam direction: ${getMeshDirection(pulsarBeam1, [0, 1, 0]).map((x) => x.toFixed(5))}`,
 			);
 		}
 	});
 
-	return <div id="pulsar-model" ref={mountRef} />;
+	return (
+		<div
+			className={`pulsar-model${orbitControlsEnabled ? " orbit-controls" : ""}`}
+			ref={mountRef}
+		/>
+	);
 }

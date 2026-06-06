@@ -1,12 +1,12 @@
-#pulsar-model {
+.pulsar-model {
 	height: 100%;
 	width: 100%;
 }
 
-#pulsar-model:hover {
+.pulsar-model.orbit-controls:hover {
 	cursor: grab;
 }
 
-#pulsar-model:active {
+.pulsar-model.orbit-controls:active {
 	cursor: grabbing;
 }
