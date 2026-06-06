@@ -103,7 +103,7 @@ export default function App() {
 				<button
 					type="button"
 					onClick={() => {
-						setCameraPosition(cameraPositionDefault);
+						pulsarModelRef.current?.resetCamera();
 						// console.log("Camera reset");
 					}}
 				>
@@ -249,7 +249,6 @@ export default function App() {
 					isAnimating={isAnimating}
 					orbitControlsEnabled={orbitControlsEnabled}
 					onPulsarPhaseChange={setPulsarPhase}
-					onPulsarAxisChange={setPulsarAxisInclination}
 					onCameraPositionChange={setCameraPosition}
 				/>
 			</div>

@@ -8,34 +8,41 @@ export function range(start: number, stop: number, step: number): number[] {
 
 export interface PulsarBeamDirectionParams {
 	pulsarPhase: number;
-	pulsarAxialTilt: number;
+	pulsarAxisInclination: [number, number, number];
 	pulsarBeamLatitude: number;
 }
 
-// Formula to calculate the direction of the pulsar beam given the phase, axial tilt, and latitude
+// Formula to calculate the direction of the pulsar beam given the phase, axis inclination, and latitude
 export function pulsarBeamDirection(
 	pulsarPhase: PulsarBeamDirectionParams["pulsarPhase"],
-	pulsarAxialTilt: PulsarBeamDirectionParams["pulsarAxialTilt"],
+	pulsarAxisInclination: PulsarBeamDirectionParams["pulsarAxisInclination"],
 	pulsarBeamLatitude: PulsarBeamDirectionParams["pulsarBeamLatitude"],
-): THREE.Vector3 {
+	pulsarBeamDirectionXZInitial: [number, number] = [-1, 0],
+): [number, number, number] {
+	const [x, z] = pulsarBeamDirectionXZInitial;
+
 	return new THREE.Vector3(
-		-Math.cos(pulsarBeamLatitude) *
-			Math.cos(pulsarPhase) *
-			Math.cos(pulsarAxialTilt) -
-			Math.sin(pulsarBeamLatitude) * Math.sin(pulsarAxialTilt),
-		-Math.cos(pulsarBeamLatitude) *
-			Math.cos(pulsarPhase) *
-			Math.sin(pulsarAxialTilt) +
-			Math.sin(pulsarBeamLatitude) * Math.cos(pulsarAxialTilt),
-		Math.cos(pulsarBeamLatitude) * Math.sin(pulsarPhase),
-	);
+		(x * Math.cos(pulsarPhase) + z * Math.sin(pulsarPhase)) *
+			Math.cos(pulsarBeamLatitude),
+		-Math.sin(pulsarBeamLatitude),
+		(-x * Math.sin(pulsarPhase) + z * Math.cos(pulsarPhase)) *
+			Math.cos(pulsarBeamLatitude),
+	)
+		.applyEuler(new THREE.Euler(...pulsarAxisInclination))
+		.toArray();
+}
+
+export interface PulsarBeamIntensityParams {
+	pulsarBeamDirection: [number, number, number];
+	cameraDirection: [number, number, number];
+	pulsarBeamAngle: number;
 }
 
 // Formula for pulsar beam intensity given the beam direction, camera/detector direction, and the beam angle
 export function pulsarBeamIntensity(
-	pulsarBeamDirection: [number, number, number],
-	cameraDirection: [number, number, number],
-	pulsarBeamAngle: number,
+	pulsarBeamDirection: PulsarBeamIntensityParams["pulsarBeamDirection"],
+	cameraDirection: PulsarBeamIntensityParams["cameraDirection"],
+	pulsarBeamAngle: PulsarBeamIntensityParams["pulsarBeamAngle"],
 ): number {
 	const pulsarCameraAngle = Math.acos(
 		new THREE.Vector3(...pulsarBeamDirection)

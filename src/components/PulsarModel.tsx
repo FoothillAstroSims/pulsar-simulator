@@ -17,7 +17,6 @@ export interface PulsarModelProps {
 	orbitControlsEnabled: boolean;
 	onPulsarPhaseChange?: (phase: number) => void;
 	onCameraPositionChange?: (pos: [number, number, number]) => void;
-	onPulsarAxisChange?: (dir: [number, number, number]) => void;
 }
 
 // Parameters and methods to expose to the parent node
@@ -54,6 +53,23 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
+const createPulsarBeamGeometry = (radius: number) =>
+	new THREE.ConeGeometry(
+		radius,
+		pulsarBeamHeight,
+		pulsarBeamRadSeg,
+		pulsarBeamHeightSeg,
+		true,
+	).translate(0, -pulsarBeamHeight / 2 - pulsarBodyRadius, 0);
+const setPulsarBeamsRotation = (
+	beam1: THREE.Mesh,
+	beam2: THREE.Mesh,
+	latitude: number,
+): void => {
+	beam1.rotation.set(0, 0, Math.PI / 2 + latitude);
+	beam2.rotation.set(0, 0, latitude - Math.PI / 2);
+};
+
 export const cameraPositionXDefault = 0.0;
 export const cameraPositionYDefault = 0.0;
 export const cameraPositionZDefault = 1.5 * pulsarBeamHeight;
@@ -79,7 +95,6 @@ export function PulsarModel(
 		isAnimating,
 		orbitControlsEnabled,
 		onPulsarPhaseChange,
-		onPulsarAxisChange,
 		onCameraPositionChange,
 	} = props;
 
@@ -102,7 +117,6 @@ export function PulsarModel(
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
 		onPulsarPhaseChange: onPulsarPhaseChange,
-		onPulsarAxisChange: onPulsarAxisChange,
 		onCameraPositionChange: onCameraPositionChange,
 	});
 
@@ -202,13 +216,7 @@ export function PulsarModel(
 		// Beams
 		const pulsarBeamRadius =
 			pulsarBeamHeight * Math.tan(pulsarParams.pulsarBeamAngle);
-		const pulsarBeamGeometry = new THREE.ConeGeometry(
-			pulsarBeamRadius,
-			pulsarBeamHeight,
-			pulsarBeamRadSeg,
-			pulsarBeamHeightSeg,
-			true,
-		).translate(0, -pulsarBeamHeight / 2 - pulsarBodyRadius, 0);
+		const pulsarBeamGeometry = createPulsarBeamGeometry(pulsarBeamRadius);
 		const pulsarBeamMaterial = new THREE.MeshBasicMaterial({
 			color: pulsarBeamColor,
 			side: THREE.DoubleSide,
@@ -219,15 +227,10 @@ export function PulsarModel(
 		const pulsarBeam2 = new THREE.Mesh(pulsarBeamGeometry, pulsarBeamMaterial);
 		pulsarBeam1.name = "pulsarBeam1";
 		pulsarBeam2.name = "pulsarBeam2";
-		pulsarBeam1.rotation.set(
-			0,
-			0,
-			-pulsarParams.pulsarBeamLatitude - Math.PI / 2,
-		);
-		pulsarBeam2.rotation.set(
-			0,
-			0,
-			Math.PI / 2 - pulsarParams.pulsarBeamLatitude,
+		setPulsarBeamsRotation(
+			pulsarBeam1,
+			pulsarBeam2,
+			pulsarParams.pulsarBeamLatitude,
 		);
 
 		// pulsarBeam1.material = pulsarBeam1.material.clone();
@@ -266,8 +269,6 @@ export function PulsarModel(
 		// Orbital controls
 		const orbitControls = new OrbitControls(camera, renderer.domElement);
 		orbitControls.enablePan = false;
-		orbitControls.enableZoom = true;
-		orbitControls.enableRotate = true;
 		orbitControls.rotateSpeed = 2;
 		orbitControls.listenToKeyEvents(window);
 		orbitControls.addEventListener("change", renderScene);
@@ -281,7 +282,6 @@ export function PulsarModel(
 			console.log(`Camera position: ${cameraPosition.toArray()}`);
 		};
 		orbitControls.addEventListener("change", emitCameraPosition);
-		emitCameraPosition();
 		orbitControls.update();
 		// TODO: Create on-screen buttons to rotate camera
 
@@ -303,7 +303,6 @@ export function PulsarModel(
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 				pulsarParams.onPulsarPhaseChange?.(pulsarParams.pulsarPhase);
-				pulsarParams.onPulsarAxisChange?.(pulsarParams.pulsarAxisInclination);
 			}
 
 			orbitControls.update();
@@ -391,6 +390,7 @@ export function PulsarModel(
 
 		if (scene && camera && renderer && orbitControls) {
 			camera.position.set(...cameraPosition);
+			renderer.render(scene, camera);
 		}
 	}, [cameraPosition]);
 
@@ -428,8 +428,7 @@ export function PulsarModel(
 			if (scene && camera && renderer) {
 				const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
 				const pulsarBeam2 = scene.getObjectByName("pulsarBeam2") as THREE.Mesh;
-				pulsarBeam1.rotation.set(0, 0, -pulsarBeamLatitude - Math.PI / 2);
-				pulsarBeam2.rotation.set(0, 0, Math.PI / 2 - pulsarBeamLatitude);
+				setPulsarBeamsRotation(pulsarBeam1, pulsarBeam2, pulsarBeamLatitude);
 
 				renderer.render(scene, camera);
 			}
@@ -467,13 +466,7 @@ export function PulsarModel(
 					?.children as THREE.Mesh<THREE.ConeGeometry>[];
 				pulsarBeams.forEach((pulsarBeam) => {
 					pulsarBeam.geometry.dispose();
-					pulsarBeam.geometry = new THREE.ConeGeometry(
-						pulsarBeamRadius,
-						pulsarBeamHeight,
-						pulsarBeamRadSeg,
-						pulsarBeamHeightSeg,
-						true,
-					).translate(0, -pulsarBeamHeight / 2 - pulsarBodyRadius, 0);
+					pulsarBeam.geometry = createPulsarBeamGeometry(pulsarBeamRadius);
 				});
 
 				renderer.render(scene, camera);

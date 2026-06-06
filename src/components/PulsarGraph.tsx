@@ -6,24 +6,27 @@ const createPlotlyComponent =
 	factoryImport;
 const Plot = createPlotlyComponent(Plotly);
 
+import { useState } from "react";
+import type { PulsarBeamIntensityParams } from "../utils";
 import { range } from "../utils";
-import type { PulsarModelProps } from "./PulsarModel";
 
-type PulsarPlotParams = PulsarModelProps & {
-	cameraDirection: [number, number, number];
+type PulsarPlotParams = PulsarBeamIntensityParams & {
+	pulsarPhase: number;
+	onPulsarPhaseChange?: (phase: number) => void;
+	isAnimating: boolean;
 };
 
-const omega = Math.PI / 24;
-const cameraAngle = Math.PI / 2;
-const xAxis = range(0, 100 * Math.PI, 0.001);
-const yAxis = xAxis.map((x) => {
-	return Math.abs(cameraAngle - (x % Math.PI)) <= omega
-		? Math.cos(((Math.PI / 2) * (cameraAngle - x)) / omega) ** 2
-		: 0;
-});
+export const pulsarPhaseDelta = 0.001
+const x = range(0, 2 * Math.PI, pulsarPhaseDelta);
+
+export function PulsarPlotPhase(props: PulsarBeamIntensityParams & {
+	pulsarPhase: number;
+	onPulsarPhaseChange: (phase: number) => void;
+	isAnimating: boolean;
+}) {
+}
 
 export function PulsarPlotTime(props: PulsarPlotParams) {
 	return;
 }
 
-export function PulsarPlotPhase(props: PulsarPlotParams) {}
