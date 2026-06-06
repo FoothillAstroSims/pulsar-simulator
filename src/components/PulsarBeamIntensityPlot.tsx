@@ -12,7 +12,7 @@ export const pulsarPhaseStep = 0.001;
 const x = range(0, 2 * Math.PI, pulsarPhaseStep);
 
 export function PulsarBeamIntensityPlotPhase(props: {
-	pulsarPhase?: number;
+	pulsarPhase: number;
 	pulsarAxisInclination: [number, number, number];
 	pulsarBeamLatitude: number;
 	cameraDirection: [number, number, number];
@@ -45,6 +45,9 @@ export function PulsarBeamIntensityPlotPhase(props: {
 						y: y,
 						type: "scattergl",
 						mode: "lines",
+						line: {
+							width: 5,
+						},
 					},
 				]}
 				layout={{
@@ -54,6 +57,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 					paper_bgcolor: "white",
 					dragmode: false,
 					autosize: true,
+					// TODO: Add vertical line to mark current phase
 				}}
 				useResizeHandler={true}
 			/>
