@@ -12,10 +12,11 @@ export interface PulsarModelProps {
 	pulsarAxisInclination: [number, number, number];
 	pulsarBeamLatitude: number;
 	pulsarBeamAngle: number;
+	cameraPosition: [number, number, number];
 	isAnimating: boolean;
 	orbitControlsEnabled: boolean;
 	onPulsarPhaseChange?: (phase: number) => void;
-	onCameraChange?: (dir: [number, number, number]) => void;
+	onCameraPositionChange?: (pos: [number, number, number]) => void;
 	onPulsarAxisChange?: (dir: [number, number, number]) => void;
 }
 
@@ -26,7 +27,7 @@ export interface PulsarModelRef {
 
 // Default pulsar parameter values
 export const pulsarPhaseDefault = 0.0;
-export const pulsarPeriodDefault = 50.0;
+export const pulsarPeriodDefault = 25.0;
 export const pulsarAxisInclinationXDefault = 0.0;
 export const pulsarAxisInclinationYDefault = 0.0;
 export const pulsarAxisInclinationZDefault = 0.0;
@@ -53,6 +54,9 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
+export const cameraPositionXDefault = 0.0;
+export const cameraPositionYDefault = 0.0;
+export const cameraPositionZDefault = 1.5 * pulsarBeamHeight;
 const lightDirectionDefault: [number, number, number] = [
 	pulsarBodyRadius * 2,
 	pulsarBodyRadius * 2,
@@ -71,17 +75,18 @@ export function PulsarModel(
 		pulsarAxisInclination,
 		pulsarBeamLatitude,
 		pulsarBeamAngle,
+		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
 		onPulsarPhaseChange,
 		onPulsarAxisChange,
-		onCameraChange,
+		onCameraPositionChange,
 	} = props;
 
 	const mountRef = useRef<HTMLDivElement | null>(null);
 	const modelRef = useRef<{
 		scene: THREE.Scene;
-		camera: THREE.Camera;
+		camera: THREE.PerspectiveCamera;
 		renderer: THREE.WebGLRenderer;
 		orbitControls: OrbitControls;
 		startAnimation: () => void;
@@ -93,11 +98,12 @@ export function PulsarModel(
 		pulsarAxisInclination: pulsarAxisInclination,
 		pulsarBeamLatitude: pulsarBeamLatitude,
 		pulsarBeamAngle: pulsarBeamAngle,
+		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
 		onPulsarPhaseChange: onPulsarPhaseChange,
 		onPulsarAxisChange: onPulsarAxisChange,
-		onCameraChange: onCameraChange,
+		onCameraPositionChange: onCameraPositionChange,
 	});
 
 	// Initialize Three.js pulsar model and animation
@@ -246,7 +252,7 @@ export function PulsarModel(
 
 		// Camera
 		const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-		camera.position.set(0, 0, pulsarBeamHeight * 1.5);
+		camera.position.set(...pulsarParams.cameraPosition);
 		camera.lookAt(0, 0, 0);
 
 		// Renderer
@@ -260,21 +266,22 @@ export function PulsarModel(
 		// Orbital controls
 		const orbitControls = new OrbitControls(camera, renderer.domElement);
 		orbitControls.enablePan = false;
+		orbitControls.enableZoom = true;
+		orbitControls.enableRotate = true;
 		orbitControls.rotateSpeed = 2;
 		orbitControls.listenToKeyEvents(window);
 		orbitControls.addEventListener("change", renderScene);
 		orbitControls.enabled = pulsarParams.orbitControlsEnabled;
 
-		const cameraDirection = new THREE.Vector3();
-		const emitCameraDirection = () => {
-			cameraDirection.copy(camera.position).normalize();
-			pulsarParams.onCameraChange?.(cameraDirection.clone().toArray());
+		const cameraPosition = new THREE.Vector3();
+		const emitCameraPosition = () => {
+			cameraPosition.copy(camera.position);
+			pulsarParams.onCameraPositionChange?.(cameraPosition.clone().toArray());
 
-			console.log(`Camera position: ${cameraDirection.toArray()}`);
+			console.log(`Camera position: ${cameraPosition.toArray()}`);
 		};
-
-		orbitControls.addEventListener("change", emitCameraDirection);
-		emitCameraDirection();
+		orbitControls.addEventListener("change", emitCameraPosition);
+		emitCameraPosition();
 		orbitControls.update();
 		// TODO: Create on-screen buttons to rotate camera
 
@@ -336,7 +343,7 @@ export function PulsarModel(
 		return () => {
 			cancelAnimationFrame(frameID);
 			orbitControls.removeEventListener("change", renderScene);
-			orbitControls.removeEventListener("change", emitCameraDirection);
+			orbitControls.removeEventListener("change", emitCameraPosition);
 			window.removeEventListener("resize", handleResize);
 			mountNode.removeChild(renderer.domElement);
 		};
@@ -376,6 +383,16 @@ export function PulsarModel(
 			orbitControls.enabled = orbitControlsEnabled;
 		}
 	}, [orbitControlsEnabled]);
+
+	useEffect(() => {
+		pulsarParamsRef.current.cameraPosition = cameraPosition;
+
+		const { scene, camera, renderer, orbitControls } = modelRef.current ?? {};
+
+		if (scene && camera && renderer && orbitControls) {
+			camera.position.set(...cameraPosition);
+		}
+	}, [cameraPosition]);
 
 	// Change pulsar phase when animation is stopped
 	useEffect(() => {

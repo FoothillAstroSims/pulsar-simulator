@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import type { PulsarModelRef } from "./components/PulsarModel";
 import {
+	cameraPositionXDefault,
+	cameraPositionYDefault,
+	cameraPositionZDefault,
 	isAnimatingDefault,
 	orbitControlsEnabledDefault,
 	PulsarModel,
@@ -20,6 +23,11 @@ const pulsarAxisInclinationDefault: [number, number, number] = [
 	pulsarAxisInclinationYDefault,
 	pulsarAxisInclinationZDefault,
 ];
+const cameraPositionDefault: [number, number, number] = [
+	cameraPositionXDefault,
+	cameraPositionYDefault,
+	cameraPositionZDefault,
+];
 
 export default function App() {
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
@@ -33,13 +41,11 @@ export default function App() {
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
+	const [cameraPosition, setCameraPosition] = useState(cameraPositionDefault);
 	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		orbitControlsEnabledDefault,
 	);
-	const [pulsarModelCameraDirection, setPulsarModelCameraDirection] = useState([
-		0, 0, 0,
-	]);
 
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
@@ -97,7 +103,7 @@ export default function App() {
 				<button
 					type="button"
 					onClick={() => {
-						pulsarModelRef.current?.resetCamera();
+						setCameraPosition(cameraPositionDefault);
 						// console.log("Camera reset");
 					}}
 				>
@@ -122,6 +128,7 @@ export default function App() {
 				<label>
 					<input
 						type="checkbox"
+						checked={orbitControlsEnabled}
 						onClick={() => setOrbitControlsEnabled(!orbitControlsEnabled)}
 					/>
 					Toggle camera control
@@ -238,11 +245,12 @@ export default function App() {
 					pulsarAxisInclination={pulsarAxisInclination}
 					pulsarBeamLatitude={pulsarBeamLatitude}
 					pulsarBeamAngle={pulsarBeamAngle}
+					cameraPosition={cameraPosition}
 					isAnimating={isAnimating}
 					orbitControlsEnabled={orbitControlsEnabled}
 					onPulsarPhaseChange={setPulsarPhase}
 					onPulsarAxisChange={setPulsarAxisInclination}
-					onCameraChange={setPulsarModelCameraDirection}
+					onCameraPositionChange={setCameraPosition}
 				/>
 			</div>
 		</>
