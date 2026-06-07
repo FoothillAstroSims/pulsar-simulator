@@ -8,27 +8,27 @@ import { getMeshDirection } from "../utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
-	pulsarPhase: number;
-	pulsarPeriod: number;
-	pulsarAxisInclination: [number, number, number];
-	pulsarBeamLatitude: number;
-	pulsarBeamAngle: number;
-	cameraPosition: [number, number, number];
-	isAnimating: boolean;
-	orbitControlsEnabled: boolean;
-	onPulsarPhaseChange?: (phase: number) => void;
-	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void;
-	onCameraPositionChange?: (pos: [number, number, number]) => void;
+	pulsarPhase: number; // Rotation around the pulsar's axis
+	pulsarPeriod: number; // Number of seconds for the pulsar to make one revolution around its axis
+	pulsarAxisInclination: [number, number, number]; // Euler angles representing the rotation of the pulsar axis itself
+	pulsarBeamLatitude: number; // Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator
+	pulsarBeamAngle: number; // Half-angle of the pulsar beams i.e. the angle between the altitude and the slant of the cone representing the beam
+	cameraPosition: [number, number, number]; // Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin
+	isAnimating: boolean; // Animation toggle
+	orbitControlsEnabled: boolean; // Orbit controls toggle
+	onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
+	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management
+	onCameraPositionChange?: (pos: [number, number, number]) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
 }
 
 // Parameters and methods to expose to the parent node
 export interface PulsarModelRef {
-	resetCamera: () => void;
+	resetCamera: () => void; // Reset the camera back to the original position when it was first initialized
 }
 
 // Default pulsar parameter values
 export const pulsarPhaseDefault = 0.0;
-export const pulsarPeriodDefault = 40.0;
+export const pulsarPeriodDefault = 4.0;
 export const pulsarAxisInclinationXDefault = 0.0;
 export const pulsarAxisInclinationYDefault = 0.0;
 export const pulsarAxisInclinationZDefault = 0.0;
@@ -37,7 +37,9 @@ export const pulsarBeamAngleDefault = Math.PI / 24;
 export const isAnimatingDefault = true;
 export const orbitControlsEnabledDefault = true;
 
-// Pulsar model constants
+const DISPLAY_FRAME_RATE = 60.0; // Assuming a 60hz display
+
+// Pulsar model constants - geometry, colors, other visual display parameters
 const pulsarBodyRadius = 5;
 const pulsarBodyWidthSeg = 64;
 const pulsarBodyHeightSeg = 32;
@@ -55,13 +57,16 @@ const pulsarAxisLineWidth = 2;
 const pulsarEquatorColor = "#ffffff";
 const pulsarEquatorLineWidth = 2;
 
-export const cameraPositionXDefault = 0.0;
+// Camera position
+export const cameraPositionXDefault = 1.5 * pulsarBeamHeight;
 export const cameraPositionYDefault = 0.0;
-export const cameraPositionZDefault = 1.5 * pulsarBeamHeight;
+export const cameraPositionZDefault = 0.0;
+
+// Lighting direction
 const lightDirectionDefault: [number, number, number] = [
 	pulsarBodyRadius * 2,
 	pulsarBodyRadius * 2,
-	pulsarBodyRadius * 2,
+	-pulsarBodyRadius * 2,
 ];
 
 // Create geometry for a pulsar beam
@@ -308,7 +313,8 @@ export function PulsarModel(
 			if (pulsarParams.isAnimating) {
 				// Rotate pulsar
 				pulsarParams.pulsarPhase =
-					(pulsarParams.pulsarPhase + 1.0 / pulsarParams.pulsarPeriod) %
+					(pulsarParams.pulsarPhase +
+						(2 * Math.PI) / (pulsarParams.pulsarPeriod * DISPLAY_FRAME_RATE)) %
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 
@@ -325,13 +331,13 @@ export function PulsarModel(
 
 		const startAnimation = () => {
 			if (!frameID) {
-				frameID = requestAnimationFrame(animate);
+				frameID = window.requestAnimationFrame(animate);
 			}
 			orbitControls.update();
 		};
 
 		const stopAnimation = () => {
-			cancelAnimationFrame(frameID);
+			window.cancelAnimationFrame(frameID);
 			frameID = 0;
 			orbitControls.update();
 		};
@@ -386,6 +392,7 @@ export function PulsarModel(
 		}
 	}, [isAnimating]);
 
+	// Enable/disable orbit controls – lock camera
 	useEffect(() => {
 		pulsarParamsRef.current.orbitControlsEnabled = orbitControlsEnabled;
 
@@ -396,24 +403,21 @@ export function PulsarModel(
 		}
 	}, [orbitControlsEnabled]);
 
+	// Change camera position from props if orbit controls are not enabled
 	useEffect(() => {
 		pulsarParamsRef.current.cameraPosition = cameraPosition;
+		if (pulsarParamsRef.current.orbitControlsEnabled) return;
 
 		const { scene, camera, renderer } = modelRef.current ?? {};
 
-		if (
-			!pulsarParamsRef.current.orbitControlsEnabled &&
-			scene &&
-			camera &&
-			renderer
-		) {
+		if (scene && camera && renderer) {
 			camera.position.set(...cameraPosition);
 			console.log("test");
 			renderer.render(scene, camera);
 		}
 	}, [cameraPosition]);
 
-	// Change pulsar phase when animation is stopped
+	// Change pulsar phase from props when animation is stopped
 	useEffect(() => {
 		if (pulsarPhase === undefined) return;
 		if (pulsarParamsRef.current.isAnimating) return;

@@ -37,11 +37,11 @@ const getDecimalPlaces = (num: number) =>
 	Math.floor(num) === num ? 0 : num.toString().split(".")[1].length || 0;
 
 const pulsarPhaseMin = 0.0;
-const pulsarPhaseMax = 2 * Math.PI;
+const pulsarPhaseMax = 1.0;
 
-const pulsarPeriodStep = 0.1;
-const pulsarPeriodMin = 10.0;
-const pulsarPeriodMax = 100.0;
+const pulsarPeriodStep = 0.01;
+const pulsarPeriodMin = 1.0;
+const pulsarPeriodMax = 10.0;
 
 const pulsarAxisInclinationStep = [0.001, 0.001, 0.001];
 const pulsarAxisInclinationMin = [0.0, 0.0, 0.0];
@@ -147,12 +147,10 @@ export default function App() {
 	}, [resetPulsarParameters]);
 
 	return (
-		// TODO: Implement pulsar beam intensity graph, and hook it up to sync with the model
 		<>
 			<div>
 				<p>Test</p>
 			</div>
-
 			<div id="pulsarParameters">
 				<input type="text" />
 				<button type="button" onClick={() => setIsAnimating(!isAnimating)}>

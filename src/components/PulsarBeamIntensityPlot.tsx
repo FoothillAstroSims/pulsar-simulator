@@ -1,7 +1,7 @@
 import Plotly from "plotly.js-dist-min";
 import factoryImport from "react-plotly.js/factory";
 
-// Hack to allow Plotly's Plot component to work with Vite
+// Hack to allow Plotly's React component to work with Vite
 const createPlotlyComponent =
 	(factoryImport as unknown as { default?: typeof factoryImport }).default ??
 	factoryImport;
@@ -39,7 +39,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	});
 
 	return (
-		<div id="pulsarBeamIntensityPlotPhase">
+		<div className="pulsar-plot pulsar-plot-phase">
 			<Plot
 				data={[
 					{
@@ -48,20 +48,26 @@ export function PulsarBeamIntensityPlotPhase(props: {
 						type: "scattergl",
 						mode: "lines",
 						line: {
-							width: 5,
+							width: 2,
 						},
 					},
 				]}
 				layout={{
-					xaxis: { range: [0, 2 * Math.PI], fixedrange: true },
-					yaxis: { range: [0, 1], fixedrange: true },
+					xaxis: {
+						range: [0, 2 * Math.PI],
+						fixedrange: true,
+						automargin: true,
+					},
+					yaxis: { range: [0, 1], fixedrange: true, automargin: true },
+					margin: { l: 0, r: 0, b: 0, t: 0 },
 					plot_bgcolor: "white",
 					paper_bgcolor: "white",
 					dragmode: false,
 					autosize: true,
 					// TODO: Add vertical line to mark current phase
 				}}
-				useResizeHandler={true}
+				// config={{ responsive: true }}
+				useResizeHandler={true} // TODO: Figure out how to resize the plot so that it always fits on the screen: https://github.com/plotly/react-plotly.js/issues/76
 			/>
 		</div>
 	);
