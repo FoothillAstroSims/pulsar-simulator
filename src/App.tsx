@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
+	PulsarBeamIntensityPlotTime,
 	pulsarPhaseStep,
 	pulsarPhaseMin,
 	pulsarPhaseMax,
@@ -64,14 +65,14 @@ export default function App() {
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
-	const [pulsarBeamDirection, setPulsarBeamDirection] = useState<
-		[number, number, number]
-	>([0, 0, 0]);
 	const [cameraPosition, setCameraPosition] = useState(cameraPositionDefault);
 	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		orbitControlsEnabledDefault,
 	);
+	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
+	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(true);
+
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
 	const resetPulsarParameters = useCallback(() => {
@@ -118,6 +119,7 @@ export default function App() {
 			<div>
 				<p>Test</p>
 			</div>
+
 			<div id="pulsarParameters">
 				<input type="text" />
 				<button type="button" onClick={() => setIsAnimating(!isAnimating)}>
@@ -254,32 +256,71 @@ export default function App() {
 				/>
 			</div>
 
-			<div style={{ height: "75vh", display: "flex" }}>
-				<div style={{ width: "50%", flex: 1 }}>
-					<PulsarModel
-						ref={pulsarModelRef}
-						pulsarPhase={pulsarPhase}
-						pulsarPeriod={pulsarPeriod}
-						pulsarAxisInclination={pulsarAxisInclination}
-						pulsarBeamLatitude={pulsarBeamLatitude}
-						pulsarBeamAngle={pulsarBeamAngle}
-						cameraPosition={cameraPosition}
-						isAnimating={isAnimating}
-						orbitControlsEnabled={orbitControlsEnabled}
-						onPulsarPhaseChange={setPulsarPhase}
-						onPulsarBeamDirectionChange={setPulsarBeamDirection}
-						onCameraPositionChange={setCameraPosition}
-					/>
+			<div style={{ height: "50vh" }}>
+				<PulsarModel
+					ref={pulsarModelRef}
+					pulsarPhase={pulsarPhase}
+					pulsarPeriod={pulsarPeriod}
+					pulsarAxisInclination={pulsarAxisInclination}
+					pulsarBeamLatitude={pulsarBeamLatitude}
+					pulsarBeamAngle={pulsarBeamAngle}
+					cameraPosition={cameraPosition}
+					isAnimating={isAnimating}
+					orbitControlsEnabled={orbitControlsEnabled}
+					onPulsarPhaseChange={setPulsarPhase}
+					onCameraPositionChange={setCameraPosition}
+				/>
+			</div>
+
+			<div style={{ display: "flex", flexFlow: "wrap" }}>
+				<div
+					style={{
+						flex: 1,
+						display: "flex",
+						flexDirection: "column",
+						gap: "100px",
+					}}
+				>
+					<div style={{ flex: 1 }}>
+						<PulsarBeamIntensityPlotPhase
+							pulsarPhase={pulsarPhase}
+							pulsarAxisInclination={pulsarAxisInclination}
+							pulsarBeamLatitude={pulsarBeamLatitude}
+							cameraDirection={cameraPosition}
+							pulsarBeamAngle={pulsarBeamAngle}
+							isAnimating={isAnimating}
+							showPhaseTimeline={showPhaseTimeline}
+							showPhaseTimelineLabel={showPhaseTimelineLabel}
+							onPulsarPhaseChange={setPulsarPhase}
+						/>
+					</div>
+					<div style={{ flex: 1 }}>
+						<label>
+							<input
+								type="checkbox"
+								checked={showPhaseTimeline}
+								onChange={() => setShowPhaseTimeline((prev) => !prev)}
+							/>
+							Show timeline
+						</label>
+						<label>
+							<input
+								type="checkbox"
+								checked={showPhaseTimelineLabel}
+								disabled={!showPhaseTimeline}
+								onChange={() => setShowPhaseTimelineLabel((prev) => !prev)}
+							/>
+							Show phase label
+						</label>
+					</div>
 				</div>
 				<div style={{ flex: 1 }}>
-					<PulsarBeamIntensityPlotPhase
+					<PulsarBeamIntensityPlotTime
 						pulsarPhase={pulsarPhase}
 						pulsarAxisInclination={pulsarAxisInclination}
 						pulsarBeamLatitude={pulsarBeamLatitude}
 						cameraDirection={cameraPosition}
 						pulsarBeamAngle={pulsarBeamAngle}
-						isAnimating={isAnimating}
-						onPulsarPhaseChange={setPulsarPhase}
 					/>
 				</div>
 			</div>

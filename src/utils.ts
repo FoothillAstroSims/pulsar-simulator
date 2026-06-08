@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+export const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, in Hz
+
 // Get the number of decimal places in a number
 export function getDecimalPlaces(num: number) {
 	return Math.floor(num) === num ? 0 : num.toString().split(".")[1].length || 0;
@@ -12,11 +14,11 @@ export function range(start: number, stop: number, step: number): number[] {
 }
 
 // Formula to calculate the direction of the pulsar beam given the phase, axis inclination, and latitude
-export function pulsarBeamDirection(
+export function getPulsarBeamDirection(
 	pulsarPhase: number,
 	pulsarAxisInclination: [number, number, number],
 	pulsarBeamLatitude: number,
-	pulsarBeamDirectionXZInitial: [number, number] = [-1, 0],
+	pulsarBeamDirectionXZInitial: [number, number] = [1, 0],
 ): [number, number, number] {
 	const [x, z] = pulsarBeamDirectionXZInitial;
 
@@ -32,7 +34,7 @@ export function pulsarBeamDirection(
 }
 
 // Formula for pulsar beam intensity given the beam direction, camera/detector direction, and the beam angle
-export function pulsarBeamIntensity(
+export function getPulsarBeamIntensity(
 	pulsarBeamDirection: [number, number, number],
 	cameraDirection: [number, number, number],
 	pulsarBeamAngle: number,
@@ -62,17 +64,19 @@ export function getMeshDirection(
 // Create an event handler that runs a callback whenever certain individual keys are pressed
 export function createKeyDownEventHandler(
 	keys: string[],
-	callback: () => void,
+	callbackFn: () => void,
 ): (e: KeyboardEvent) => void {
-	return (e: KeyboardEvent) => {
+	return (e) => {
 		const target = e.target;
 		if (
 			target &&
 			target instanceof HTMLInputElement &&
-			(target.type === "text" || target.type === "textarea")
+			(target.type === "text" ||
+				target.type === "textarea" ||
+				target.type === "number")
 		)
 			return;
 
-		if (keys.includes(e.key)) callback();
+		if (keys.includes(e.key)) callbackFn();
 	};
 }

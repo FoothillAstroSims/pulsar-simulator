@@ -4,7 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { getMeshDirection } from "../utils";
+import { getMeshDirection, DISPLAY_FRAME_RATE } from "../utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
@@ -17,8 +17,8 @@ export interface PulsarModelProps {
 	isAnimating: boolean; // Animation toggle
 	orbitControlsEnabled: boolean; // Orbit controls toggle
 	onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
-	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management
 	onCameraPositionChange?: (pos: [number, number, number]) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
+	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
 }
 
 // Parameters and methods to expose to the parent node
@@ -36,8 +36,6 @@ export const pulsarBeamLatitudeDefault = 0.0;
 export const pulsarBeamAngleDefault = Math.PI / 24;
 export const isAnimatingDefault = true;
 export const orbitControlsEnabledDefault = false;
-
-const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, assuming 60hz
 
 // Pulsar model constants - geometry, colors, other visual display parameters
 const pulsarBodyRadius = 5;
@@ -108,7 +106,8 @@ export function PulsarModel(
 		onPulsarBeamDirectionChange,
 		onCameraPositionChange,
 	} = props;
-	const mountRef = useRef<HTMLDivElement | null>(null);
+
+	const mountRef = useRef<HTMLDivElement | null>(null); // HTML div element that the Three.js model will be rendered inside
 	const modelRef = useRef<{
 		scene: THREE.Scene;
 		camera: THREE.PerspectiveCamera;
@@ -116,7 +115,7 @@ export function PulsarModel(
 		orbitControls: OrbitControls;
 		startAnimation: () => void;
 		stopAnimation: () => void;
-	} | null>(null);
+	} | null>(null); // References to model elements and parameters
 	const pulsarParamsRef = useRef<PulsarModelProps>({
 		pulsarPhase: pulsarPhase,
 		pulsarPeriod: pulsarPeriod,
@@ -129,7 +128,7 @@ export function PulsarModel(
 		onPulsarPhaseChange: onPulsarPhaseChange,
 		onPulsarBeamDirectionChange: onPulsarBeamDirectionChange,
 		onCameraPositionChange: onCameraPositionChange,
-	});
+	}); // Pulsar parameters reference
 
 	// Initialize Three.js pulsar model and animation
 	useEffect(() => {
@@ -337,6 +336,7 @@ export function PulsarModel(
 
 		const stopAnimation = () => {
 			window.cancelAnimationFrame(frameID);
+			frameID = 0;
 			orbitControls.update();
 		};
 
@@ -501,11 +501,14 @@ export function PulsarModel(
 
 		if (scene) {
 			const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
+			pulsarParamsRef.current.onPulsarBeamDirectionChange?.(
+				getMeshDirection(pulsarBeam1, [0, 1, 0]),
+			);
 			console.log(
 				`Pulsar beam direction: ${getMeshDirection(pulsarBeam1, [0, 1, 0]).map((x) => x.toFixed(5))}`,
 			);
 		}
-	});
+	}, [pulsarPhase, pulsarAxisInclination, pulsarBeamLatitude]);
 
 	return (
 		<div
