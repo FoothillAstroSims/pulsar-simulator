@@ -18,7 +18,7 @@ export function getPulsarBeamDirection(
 	pulsarPhase: number,
 	pulsarAxisInclination: [number, number, number],
 	pulsarBeamLatitude: number,
-	pulsarBeamDirectionXZInitial: [number, number] = [1, 0],
+	pulsarBeamDirectionXZInitial: [number, number] = [-1, 0],
 ): [number, number, number] {
 	const [x, z] = pulsarBeamDirectionXZInitial;
 
