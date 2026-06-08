@@ -37,10 +37,11 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
+          cache-dependency-path: ./pnpm-lock.yaml
           node-version: lts/*
           cache: "pnpm"
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm run build
       - name: Setup Pages
