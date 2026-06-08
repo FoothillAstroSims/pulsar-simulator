@@ -15,7 +15,7 @@
 		"@react-three/drei": "^10.7.7",
 		"@react-three/fiber": "^9.6.1",
 		"plotly.js": "^3.5.1",
-		"plotly.js-dist-min": "^3.5.1",
+		"plotly.js-dist-min": "^3.6.0",
 		"pnpm": "^11.5.0",
 		"react": "^19.2.6",
 		"react-dom": "^19.2.6",

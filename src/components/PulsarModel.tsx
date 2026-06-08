@@ -35,9 +35,9 @@ export const pulsarAxisInclinationZDefault = 0.0;
 export const pulsarBeamLatitudeDefault = 0.0;
 export const pulsarBeamAngleDefault = Math.PI / 24;
 export const isAnimatingDefault = true;
-export const orbitControlsEnabledDefault = true;
+export const orbitControlsEnabledDefault = false;
 
-const DISPLAY_FRAME_RATE = 60.0; // Assuming a 60hz display
+const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, assuming 60hz
 
 // Pulsar model constants - geometry, colors, other visual display parameters
 const pulsarBodyRadius = 5;
@@ -108,7 +108,6 @@ export function PulsarModel(
 		onPulsarBeamDirectionChange,
 		onCameraPositionChange,
 	} = props;
-
 	const mountRef = useRef<HTMLDivElement | null>(null);
 	const modelRef = useRef<{
 		scene: THREE.Scene;
@@ -174,7 +173,7 @@ export function PulsarModel(
 		const pulsar = new THREE.Group();
 		pulsar.name = "pulsar";
 
-		// Main body
+		// Main pulsar body
 		const pulsarBodyGeometry = new THREE.SphereGeometry(
 			pulsarBodyRadius,
 			pulsarBodyWidthSeg,
@@ -338,7 +337,6 @@ export function PulsarModel(
 
 		const stopAnimation = () => {
 			window.cancelAnimationFrame(frameID);
-			frameID = 0;
 			orbitControls.update();
 		};
 
@@ -392,7 +390,7 @@ export function PulsarModel(
 		}
 	}, [isAnimating]);
 
-	// Enable/disable orbit controls – lock camera
+	// Enable/disable orbit controls i.e. lock camera
 	useEffect(() => {
 		pulsarParamsRef.current.orbitControlsEnabled = orbitControlsEnabled;
 

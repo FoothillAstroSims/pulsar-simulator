@@ -3,6 +3,8 @@ import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
 	pulsarPhaseStep,
+	pulsarPhaseMin,
+	pulsarPhaseMax,
 } from "./components/PulsarBeamIntensityPlot";
 import type { PulsarModelRef } from "./components/PulsarModel";
 import {
@@ -21,6 +23,7 @@ import {
 	pulsarPhaseDefault,
 } from "./components/PulsarModel";
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
+import { getDecimalPlaces, createKeyDownEventHandler } from "./utils";
 
 const pulsarAxisInclinationDefault: [number, number, number] = [
 	pulsarAxisInclinationXDefault,
@@ -32,12 +35,6 @@ const cameraPositionDefault: [number, number, number] = [
 	cameraPositionYDefault,
 	cameraPositionZDefault,
 ];
-
-const getDecimalPlaces = (num: number) =>
-	Math.floor(num) === num ? 0 : num.toString().split(".")[1].length || 0;
-
-const pulsarPhaseMin = 0.0;
-const pulsarPhaseMax = 1.0;
 
 const pulsarPeriodStep = 0.01;
 const pulsarPeriodMin = 1.0;
@@ -53,7 +50,7 @@ const pulsarBeamLatitudeMax = Math.PI / 2;
 
 const pulsarBeamAngleStep = 0.001;
 const pulsarBeamAngleMin = 0.0;
-const pulsarBeamAngleMax = Math.PI / 12;
+const pulsarBeamAngleMax = Math.PI / 8;
 
 export default function App() {
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
@@ -75,6 +72,7 @@ export default function App() {
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		orbitControlsEnabledDefault,
 	);
+	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
 
 	const resetPulsarParameters = useCallback(() => {
 		if (!isAnimating) {
@@ -87,56 +85,25 @@ export default function App() {
 		}
 	}, [isAnimating]);
 
-	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
-
 	// Register keyboard event handlers
 	useEffect(() => {
 		// Start/stop animation
-		const isAnimatingHandler = (e: KeyboardEvent) => {
-			const target = e.target;
-			if (
-				target &&
-				target instanceof HTMLInputElement &&
-				(target.type === "text" || target.type === "textarea")
-			)
-				return;
-
-			if (e.key === "p" || e.key === "P") {
-				setIsAnimating((prev) => !prev);
-			}
-		};
+		const isAnimatingHandler = createKeyDownEventHandler(["p", "P"], () =>
+			setIsAnimating((prev) => !prev),
+		);
 		window.addEventListener("keydown", isAnimatingHandler);
 
 		// Reset camera
-		const resetCameraHandler = (e: KeyboardEvent) => {
-			const target = e.target;
-			if (
-				target &&
-				target instanceof HTMLInputElement &&
-				(target.type === "text" || target.type === "textarea")
-			)
-				return;
-
-			if (e.key === "c" || e.key === "C") {
-				pulsarModelRef.current?.resetCamera();
-			}
-		};
+		const resetCameraHandler = createKeyDownEventHandler(["c", "C"], () => {
+			pulsarModelRef.current?.resetCamera();
+		});
 		window.addEventListener("keydown", resetCameraHandler);
 
 		// Reset parameters
-		const resetPulsarParametersHandler = (e: KeyboardEvent) => {
-			const target = e.target;
-			if (
-				target &&
-				target instanceof HTMLInputElement &&
-				(target.type === "text" || target.type === "textarea")
-			)
-				return;
-
-			if (e.key === "r" || e.key === "R") {
-				resetPulsarParameters();
-			}
-		};
+		const resetPulsarParametersHandler = createKeyDownEventHandler(
+			["r", "R"],
+			() => resetPulsarParameters(),
+		);
 		window.addEventListener("keydown", resetPulsarParametersHandler);
 
 		return () => {
@@ -306,11 +273,13 @@ export default function App() {
 				</div>
 				<div style={{ flex: 1 }}>
 					<PulsarBeamIntensityPlotPhase
-						pulsarPhase={0}
+						pulsarPhase={pulsarPhase}
 						pulsarAxisInclination={pulsarAxisInclination}
 						pulsarBeamLatitude={pulsarBeamLatitude}
 						cameraDirection={cameraPosition}
 						pulsarBeamAngle={pulsarBeamAngle}
+						isAnimating={isAnimating}
+						onPulsarPhaseChange={setPulsarPhase}
 					/>
 				</div>
 			</div>
