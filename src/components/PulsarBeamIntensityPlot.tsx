@@ -25,7 +25,7 @@ const x = range(pulsarPhaseMin, pulsarPhaseMax, pulsarPhaseStep);
 const Y0 = Number.MIN_SAFE_INTEGER + 1;
 const Y1 = Number.MAX_SAFE_INTEGER;
 
-const MAX_POINTS = 5 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
+const MAX_POINTS = 6 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
 
 // Phase-based pulsar beam intensity plot
 export function PulsarBeamIntensityPlotPhase(props: {
@@ -218,7 +218,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 				rangemode: "nonnegative",
 			},
 			yaxis: { range: [-0.01, 1.01], fixedrange: true, automargin: true },
-			margin: { l: 0, r: 0, b: 0, t: 10 },
+			margin: { l: 0, r: 0, t: 10 },
 			plot_bgcolor: "white",
 			paper_bgcolor: "white",
 			dragmode: false,

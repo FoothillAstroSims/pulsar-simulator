@@ -42,7 +42,7 @@ const pulsarPeriodMin = 1.0;
 const pulsarPeriodMax = 10.0;
 
 const pulsarAxisInclinationStep = [0.001, 0.001, 0.001];
-const pulsarAxisInclinationMin = [0.0, 0.0, 0.0];
+const pulsarAxisInclinationMin = [-Math.PI, -Math.PI, -Math.PI];
 const pulsarAxisInclinationMax = [Math.PI, Math.PI, Math.PI];
 
 const pulsarBeamLatitudeStep = 0.001;
@@ -179,10 +179,9 @@ export default function App() {
 					}}
 				/>
 				<br />
-				Pulsar inclination{" "}
 				<PulsarParameterInput
 					name="pulsarAxisInclinationX"
-					label="X"
+					label="Position angle"
 					min={pulsarAxisInclinationMin[0]}
 					max={pulsarAxisInclinationMax[0]}
 					step={pulsarAxisInclinationStep[0]}
@@ -196,7 +195,7 @@ export default function App() {
 						// console.log(`Pulsar axis inclination X: ${e.target.value}`);
 					}}
 				/>
-				<PulsarParameterInput
+				{/* <PulsarParameterInput
 					name="pulsarAxisInclinationY"
 					label="Y"
 					min={pulsarAxisInclinationMin[1]}
@@ -211,10 +210,10 @@ export default function App() {
 						]);
 						// console.log(`Pulsar axis inclination Y: ${e.target.value}`);
 					}}
-				/>
+				/> */}
 				<PulsarParameterInput
 					name="pulsarInclinationZ"
-					label="Z"
+					label="Inclination angle"
 					min={pulsarAxisInclinationMin[2]}
 					max={pulsarAxisInclinationMax[2]}
 					step={pulsarAxisInclinationStep[2]}
