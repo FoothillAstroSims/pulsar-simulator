@@ -22,8 +22,8 @@ export const pulsarPhaseMax = 2 * Math.PI;
 const x = range(pulsarPhaseMin, pulsarPhaseMax, pulsarPhaseStep);
 
 // Fixed y-values for the timeline in the phase-based plot
-const Y0 = Number.MIN_SAFE_INTEGER + 1;
-const Y1 = Number.MAX_SAFE_INTEGER;
+const Y0 = -(2 ** 51) + 1.5;
+const Y1 = 2 ** 51;
 
 const MAX_POINTS = 6 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
 
@@ -50,6 +50,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		showPhaseTimelineLabel,
 		onPulsarPhaseChange,
 	} = props;
+
+	// State variables for the timeline y endpoints
 	const [y0, setY0] = useState(Y0);
 	const [y1, setY1] = useState(Y1);
 
@@ -63,7 +65,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		);
 		return getPulsarBeamIntensity(dir, cameraDirection, pulsarBeamAngle);
 	});
-	const pulsarBeamIntensityData: Partial<Plotly.Data> = {
+	const data: Partial<Plotly.Data> = {
 		x: x,
 		y: y,
 		type: "scattergl",
@@ -92,7 +94,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				fixedrange: true,
 				automargin: true,
 			},
-			margin: { l: 0, r: 0, b: 0, t: 10 },
+			margin: { l: 0, r: 0, b: 0, t: 0 },
 			plot_bgcolor: "white",
 			paper_bgcolor: "white",
 			dragmode: false,
@@ -122,8 +124,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 						size: 20,
 						shadow: "lightgray 1px 1px 1px",
 					},
+					xanchor: "right",
 					yanchor: "middle",
-					padding: 10,
 				};
 			}
 			l.shapes = [pulsarPhaseTimelineBar];
@@ -158,15 +160,14 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	);
 
 	return (
-		<div className="pulsar-plot pulsar-plot-phase">
-			<Plot
-				data={[pulsarBeamIntensityData]}
-				layout={layout}
-				config={{ edits: { shapePosition: !isAnimating } }}
-				onRelayout={handleRelayout}
-				useResizeHandler // TODO: Figure out how to resize the plot so that it always fits on the screen: https://github.com/plotly/react-plotly.js/issues/76
-			/>
-		</div>
+		<Plot
+			data={[data]}
+			layout={layout}
+			config={{ edits: { shapePosition: !isAnimating } }}
+			style={{ width: "100%", height: "100%" }} // Required for auto-resizing to be able to take effect
+			onRelayout={handleRelayout}
+			useResizeHandler
+		/>
 	);
 }
 
@@ -186,39 +187,39 @@ export function PulsarBeamIntensityPlotTime(props: {
 		cameraDirection,
 		pulsarBeamAngle,
 	} = props;
+
 	const gdRef = useRef<Plotly.Root>(null); // div element that the Plot component is rendered inside
-	const [data] = useState<Partial<Plotly.PlotData>[]>([
-		{
-			x: [0],
-			y: [
-				getPulsarBeamIntensity(
-					getPulsarBeamDirection(
-						pulsarPhase,
-						pulsarAxisInclination,
-						pulsarBeamLatitude,
-					),
-					cameraDirection,
-					pulsarBeamAngle,
+	const [data] = useState<Partial<Plotly.PlotData>>({
+		x: [0],
+		y: [
+			getPulsarBeamIntensity(
+				getPulsarBeamDirection(
+					pulsarPhase,
+					pulsarAxisInclination,
+					pulsarBeamLatitude,
 				),
-			],
-			type: "scattergl",
-			mode: "lines",
-			line: {
-				shape: "spline",
-				width: 4,
-			},
+				cameraDirection,
+				pulsarBeamAngle,
+			),
+		],
+		type: "scattergl",
+		mode: "lines",
+		line: {
+			shape: "spline",
+			width: 4,
 		},
-	]); // Initial data point + plot type
+	}); // Initial data point + plot type
 	const xCounter = useRef(0); // Counter used to help update plot data
 
 	// Layout
 	const layout: Partial<Plotly.Layout> = useMemo(() => {
 		return {
 			xaxis: {
+				automargin: true,
 				rangemode: "nonnegative",
 			},
 			yaxis: { range: [-0.01, 1.01], fixedrange: true, automargin: true },
-			margin: { l: 0, r: 0, t: 10 },
+			margin: { l: 0, r: 0, b: 0, t: 0 },
 			plot_bgcolor: "white",
 			paper_bgcolor: "white",
 			dragmode: false,
@@ -270,15 +271,15 @@ export function PulsarBeamIntensityPlotTime(props: {
 	]);
 
 	return (
-		<div className="pulsar-plot pulsar-plot-time">
-			<Plot
-				data={data}
-				layout={layout}
-				onInitialized={(_figure, gd) => {
-					gdRef.current = gd as unknown as Plotly.Root;
-				}}
-				onPurge={() => (gdRef.current = null)}
-			/>
-		</div>
+		<Plot
+			data={[data]}
+			layout={layout}
+			style={{ width: "100%", height: "100%" }} // Required for auto-resizing to be able to take effect
+			onInitialized={(_figure, gd) => {
+				gdRef.current = gd as unknown as Plotly.Root; // Get reference to the graph div
+			}}
+			onPurge={() => (gdRef.current = null)} // Clean up graph div reference
+			useResizeHandler
+		/>
 	);
 }

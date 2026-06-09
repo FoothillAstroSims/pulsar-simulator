@@ -145,7 +145,12 @@ export default function App() {
 					<input
 						type="checkbox"
 						checked={!orbitControlsEnabled}
-						onChange={() => setOrbitControlsEnabled(!orbitControlsEnabled)}
+						onChange={() => {
+							setOrbitControlsEnabled((prev) => !prev);
+							console.log(
+								`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
+							);
+						}}
 					/>
 					Lock camera
 				</label>
@@ -230,7 +235,7 @@ export default function App() {
 				<br />
 				<PulsarParameterInput
 					name="pulsarBeamLatitude"
-					label="Pulsar beam latitude"
+					label="Beam latitude"
 					min={pulsarBeamLatitudeMin}
 					max={pulsarBeamLatitudeMax}
 					step={pulsarBeamLatitudeStep}
@@ -243,7 +248,7 @@ export default function App() {
 				<br />
 				<PulsarParameterInput
 					name="pulsarBeamAngle"
-					label="Pulsar beam angle"
+					label="Beam angle"
 					min={pulsarBeamAngleMin}
 					max={pulsarBeamAngleMax}
 					step={pulsarBeamAngleStep}
@@ -255,32 +260,41 @@ export default function App() {
 				/>
 			</div>
 
-			<div style={{ height: "50vh" }}>
-				<PulsarModel
-					ref={pulsarModelRef}
-					pulsarPhase={pulsarPhase}
-					pulsarPeriod={pulsarPeriod}
-					pulsarAxisInclination={pulsarAxisInclination}
-					pulsarBeamLatitude={pulsarBeamLatitude}
-					pulsarBeamAngle={pulsarBeamAngle}
-					cameraPosition={cameraPosition}
-					isAnimating={isAnimating}
-					orbitControlsEnabled={orbitControlsEnabled}
-					onPulsarPhaseChange={setPulsarPhase}
-					onCameraPositionChange={setCameraPosition}
-				/>
-			</div>
-
-			<div style={{ display: "flex", flexFlow: "wrap" }}>
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "row",
+					width: "100vw",
+					height: "75vh",
+					minHeight: "400px",
+				}}
+			>
+				<div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+					<PulsarModel
+						ref={pulsarModelRef}
+						pulsarPhase={pulsarPhase}
+						pulsarPeriod={pulsarPeriod}
+						pulsarAxisInclination={pulsarAxisInclination}
+						pulsarBeamLatitude={pulsarBeamLatitude}
+						pulsarBeamAngle={pulsarBeamAngle}
+						cameraPosition={cameraPosition}
+						isAnimating={isAnimating}
+						orbitControlsEnabled={orbitControlsEnabled}
+						onPulsarPhaseChange={setPulsarPhase}
+						onCameraPositionChange={setCameraPosition}
+					/>
+				</div>
 				<div
 					style={{
 						flex: 1,
 						display: "flex",
 						flexDirection: "column",
-						gap: "100px",
+						gap: "5px",
+						minWidth: 0,
+						minHeight: 0,
 					}}
 				>
-					<div style={{ flex: 1 }}>
+					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "10px" }}>
 						<PulsarBeamIntensityPlotPhase
 							pulsarPhase={pulsarPhase}
 							pulsarAxisInclination={pulsarAxisInclination}
@@ -293,7 +307,7 @@ export default function App() {
 							onPulsarPhaseChange={setPulsarPhase}
 						/>
 					</div>
-					<div style={{ flex: 1 }}>
+					<div style={{ flex: 1, minWidth: 0, minHeight: 0, padding: "5px" }}>
 						<label>
 							<input
 								type="checkbox"
@@ -312,15 +326,15 @@ export default function App() {
 							Show phase label
 						</label>
 					</div>
-				</div>
-				<div style={{ flex: 1 }}>
-					<PulsarBeamIntensityPlotTime
-						pulsarPhase={pulsarPhase}
-						pulsarAxisInclination={pulsarAxisInclination}
-						pulsarBeamLatitude={pulsarBeamLatitude}
-						cameraDirection={cameraPosition}
-						pulsarBeamAngle={pulsarBeamAngle}
-					/>
+					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "10px" }}>
+						<PulsarBeamIntensityPlotTime
+							pulsarPhase={pulsarPhase}
+							pulsarAxisInclination={pulsarAxisInclination}
+							pulsarBeamLatitude={pulsarBeamLatitude}
+							cameraDirection={cameraPosition}
+							pulsarBeamAngle={pulsarBeamAngle}
+						/>
+					</div>
 				</div>
 			</div>
 		</>
