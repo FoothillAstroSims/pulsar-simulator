@@ -13,7 +13,7 @@ export function range(start: number, stop: number, step: number): number[] {
 	return Array.from({ length: len }, (_, i) => start + i * step);
 }
 
-// Formula to calculate the direction of the pulsar beam given the phase, axis inclination, and latitude
+// Formula to calculate the direction of the pulsar beam given the initial direction, phase, axis inclination, and latitude
 export function getPulsarBeamDirection(
 	pulsarPhase: number,
 	pulsarAxisInclination: [number, number, number],

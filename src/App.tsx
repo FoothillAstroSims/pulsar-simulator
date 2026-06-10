@@ -6,6 +6,7 @@ import {
 	pulsarPhaseStep,
 	pulsarPhaseMin,
 	pulsarPhaseMax,
+	type PulsarPlotTimeRef,
 } from "./components/PulsarBeamIntensityPlot";
 import type { PulsarModelRef } from "./components/PulsarModel";
 import {
@@ -15,9 +16,9 @@ import {
 	isAnimatingDefault,
 	orbitControlsEnabledDefault,
 	PulsarModel,
-	pulsarAxisInclinationXDefault,
-	pulsarAxisInclinationYDefault,
-	pulsarAxisInclinationZDefault,
+	pulsarAxisEulerXDefault,
+	pulsarAxisEulerYDefault,
+	pulsarAxisEulerZDefault,
 	pulsarBeamAngleDefault,
 	pulsarBeamLatitudeDefault,
 	pulsarPeriodDefault,
@@ -26,10 +27,10 @@ import {
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
 import { getDecimalPlaces, createKeyDownEventHandler } from "./utils";
 
-const pulsarAxisInclinationDefault: [number, number, number] = [
-	pulsarAxisInclinationXDefault,
-	pulsarAxisInclinationYDefault,
-	pulsarAxisInclinationZDefault,
+const pulsarAxisEulerDefault: [number, number, number] = [
+	pulsarAxisEulerXDefault,
+	pulsarAxisEulerYDefault,
+	pulsarAxisEulerZDefault,
 ];
 const cameraPositionDefault: [number, number, number] = [
 	cameraPositionXDefault,
@@ -41,9 +42,9 @@ const pulsarPeriodStep = 0.01;
 const pulsarPeriodMin = 1.0;
 const pulsarPeriodMax = 10.0;
 
-const pulsarAxisInclinationStep = [0.001, 0.001, 0.001];
-const pulsarAxisInclinationMin = [-Math.PI, -Math.PI, -Math.PI];
-const pulsarAxisInclinationMax = [Math.PI, Math.PI, Math.PI];
+const pulsarAxisEulerStep = [0.001, 0.001, 0.001];
+const pulsarAxisEulerMin = [-Math.PI, -Math.PI, -Math.PI];
+const pulsarAxisEulerMax = [Math.PI, Math.PI, Math.PI];
 
 const pulsarBeamLatitudeStep = 0.001;
 const pulsarBeamLatitudeMin = 0.0;
@@ -59,9 +60,9 @@ export default function App() {
 	const [pulsarBeamLatitude, setPulsarBeamLatitude] = useState(
 		pulsarBeamLatitudeDefault,
 	);
-	const [pulsarAxisInclination, setPulsarAxisInclination] = useState<
+	const [pulsarAxisEuler, setPulsarAxisEuler] = useState<
 		[number, number, number]
-	>(pulsarAxisInclinationDefault);
+	>(pulsarAxisEulerDefault);
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
@@ -71,15 +72,16 @@ export default function App() {
 		orbitControlsEnabledDefault,
 	);
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
-	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(true);
+	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
 
 	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
+	const pulsarPlotTimeRef = useRef<PulsarPlotTimeRef | null>(null);
 
 	const resetPulsarParameters = useCallback(() => {
 		if (!isAnimating) {
 			setPulsarPhase(pulsarPhaseDefault);
 			setPulsarPeriod(pulsarPeriodDefault);
-			setPulsarAxisInclination(pulsarAxisInclinationDefault);
+			setPulsarAxisEuler(pulsarAxisEulerDefault);
 			setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
 			setPulsarBeamAngle(pulsarBeamAngleDefault);
 			// console.log("Pulsar parameters reset");
@@ -95,9 +97,9 @@ export default function App() {
 		window.addEventListener("keydown", isAnimatingHandler);
 
 		// Reset camera
-		const resetCameraHandler = createKeyDownEventHandler(["c", "C"], () => {
-			pulsarModelRef.current?.resetCamera();
-		});
+		const resetCameraHandler = createKeyDownEventHandler(["c", "C"], () =>
+			pulsarModelRef.current?.resetCamera(),
+		);
 		window.addEventListener("keydown", resetCameraHandler);
 
 		// Reset parameters
@@ -122,7 +124,7 @@ export default function App() {
 
 			<div id="pulsarParameters">
 				<input type="text" />
-				<button type="button" onClick={() => setIsAnimating(!isAnimating)}>
+				<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
 					{isAnimating ? "Stop" : "Start"}
 				</button>
 				<button
@@ -185,51 +187,51 @@ export default function App() {
 				/>
 				<br />
 				<PulsarParameterInput
-					name="pulsarAxisInclinationX"
+					name="pulsarPositionAngle"
 					label="Position angle"
-					min={pulsarAxisInclinationMin[0]}
-					max={pulsarAxisInclinationMax[0]}
-					step={pulsarAxisInclinationStep[0]}
-					value={pulsarAxisInclination[0]}
+					min={pulsarAxisEulerMin[0]}
+					max={pulsarAxisEulerMax[0]}
+					step={pulsarAxisEulerStep[0]}
+					value={pulsarAxisEuler[0]}
 					onChange={(e) => {
-						setPulsarAxisInclination([
+						setPulsarAxisEuler([
 							parseFloat(e.target.value),
-							pulsarAxisInclination[1],
-							pulsarAxisInclination[2],
+							pulsarAxisEuler[1],
+							pulsarAxisEuler[2],
 						]);
-						// console.log(`Pulsar axis inclination X: ${e.target.value}`);
+						// console.log(`Pulsar position angle (Euler X): ${e.target.value}`);
 					}}
 				/>
 				{/* <PulsarParameterInput
 					name="pulsarAxisInclinationY"
 					label="Y"
-					min={pulsarAxisInclinationMin[1]}
-					max={pulsarAxisInclinationMax[1]}
-					step={pulsarAxisInclinationStep[1]}
-					value={pulsarAxisInclination[1]}
+					min={pulsarAxisEulerMin[1]}
+					max={pulsarAxisEulerMax[1]}
+					step={pulsarAxisEulerStep[1]}
+					value={pulsarAxisEuler[1]}
 					onChange={(e) => {
-						setPulsarAxisInclination([
-							pulsarAxisInclination[0],
+						setPulsarAxisEuler([
+							pulsarAxisEuler[0],
 							parseFloat(e.target.value),
-							pulsarAxisInclination[2],
+							pulsarAxisEuler[2],
 						]);
 						// console.log(`Pulsar axis inclination Y: ${e.target.value}`);
 					}}
 				/> */}
 				<PulsarParameterInput
-					name="pulsarInclinationZ"
+					name="pulsarInclinationAngle"
 					label="Inclination angle"
-					min={pulsarAxisInclinationMin[2]}
-					max={pulsarAxisInclinationMax[2]}
-					step={pulsarAxisInclinationStep[2]}
-					value={pulsarAxisInclination[2]}
+					min={pulsarAxisEulerMin[2]}
+					max={pulsarAxisEulerMax[2]}
+					step={pulsarAxisEulerStep[2]}
+					value={pulsarAxisEuler[2]}
 					onChange={(e) => {
-						setPulsarAxisInclination([
-							pulsarAxisInclination[0],
-							pulsarAxisInclination[1],
+						setPulsarAxisEuler([
+							pulsarAxisEuler[0],
+							pulsarAxisEuler[1],
 							parseFloat(e.target.value),
 						]);
-						// console.log(`Pulsar axis inclination Z: ${e.target.value}`);
+						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
 				/>
 				<br />
@@ -274,7 +276,7 @@ export default function App() {
 						ref={pulsarModelRef}
 						pulsarPhase={pulsarPhase}
 						pulsarPeriod={pulsarPeriod}
-						pulsarAxisInclination={pulsarAxisInclination}
+						pulsarAxisEuler={pulsarAxisEuler}
 						pulsarBeamLatitude={pulsarBeamLatitude}
 						pulsarBeamAngle={pulsarBeamAngle}
 						cameraPosition={cameraPosition}
@@ -289,15 +291,16 @@ export default function App() {
 						flex: 1,
 						display: "flex",
 						flexDirection: "column",
+						alignItems: "center",
 						gap: "5px",
 						minWidth: 0,
 						minHeight: 0,
 					}}
 				>
-					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "10px" }}>
+					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotPhase
 							pulsarPhase={pulsarPhase}
-							pulsarAxisInclination={pulsarAxisInclination}
+							pulsarAxisInclination={pulsarAxisEuler}
 							pulsarBeamLatitude={pulsarBeamLatitude}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
@@ -326,14 +329,26 @@ export default function App() {
 							Show phase label
 						</label>
 					</div>
-					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "10px" }}>
+					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotTime
+							ref={pulsarPlotTimeRef}
 							pulsarPhase={pulsarPhase}
-							pulsarAxisInclination={pulsarAxisInclination}
+							pulsarAxisInclination={pulsarAxisEuler}
 							pulsarBeamLatitude={pulsarBeamLatitude}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
+							isAnimating={isAnimating}
 						/>
+					</div>
+					<div style={{ flex: 1, minWidth: 0, minHeight: 0, padding: "5px" }}>
+						<button
+							type="button"
+							onClick={() => {
+								pulsarPlotTimeRef.current?.resetPlot();
+							}}
+						>
+							Reset
+						</button>
 					</div>
 				</div>
 			</div>
