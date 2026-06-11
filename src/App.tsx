@@ -3,55 +3,39 @@ import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
 	PulsarBeamIntensityPlotTime,
+} from "./components/PulsarBeamIntensityPlot";
+import { PulsarModel } from "./components/PulsarModel";
+import { PulsarParameterInput } from "./components/PulsarParameterInput";
+import { PulsarSkyView } from "./components/PulsarSkyView";
+import {
+	cameraPositionDefault,
+	isAnimatingDefault,
+	orbitControlsEnabledDefault,
+	pulsarAxisEulerDefault,
+	pulsarAxisEulerMax,
+	pulsarAxisEulerMin,
+	pulsarAxisEulerStep,
+	pulsarBeamAngleDefault,
+	pulsarBeamAngleMax,
+	pulsarBeamAngleMin,
+	pulsarBeamAngleStep,
+	pulsarBeamLatitudeDefault,
+	pulsarBeamLatitudeMax,
+	pulsarBeamLatitudeMin,
+	pulsarBeamLatitudeStep,
+	pulsarPeriodDefault,
+	pulsarPeriodMax,
+	pulsarPeriodMin,
+	pulsarPeriodStep,
+	pulsarPhaseDefault,
 	pulsarPhaseMax,
 	pulsarPhaseMin,
 	pulsarPhaseStep,
-} from "./components/PulsarBeamIntensityPlot";
-import {
-	cameraPositionXDefault,
-	cameraPositionYDefault,
-	cameraPositionZDefault,
-	isAnimatingDefault,
-	orbitControlsEnabledDefault,
-	pulsarAxisEulerXDefault,
-	pulsarAxisEulerYDefault,
-	pulsarAxisEulerZDefault,
-	pulsarBeamAngleDefault,
-	pulsarBeamLatitudeDefault,
-	PulsarModel,
-	pulsarPeriodDefault,
-	pulsarPhaseDefault,
-} from "./components/PulsarModel";
-import { PulsarParameterInput } from "./components/PulsarParameterInput";
+	pulsarPhaseXRescale,
+	pulsarPhaseXUnrescale,
+	type Triplet,
+} from "./components/utils-pulsar";
 import { createKeyDownEventHandler, getDecimalPlaces } from "./utils";
-import { PulsarSkyView } from "./components/PulsarSkyView";
-
-const pulsarAxisEulerDefault: [number, number, number] = [
-	pulsarAxisEulerXDefault,
-	pulsarAxisEulerYDefault,
-	pulsarAxisEulerZDefault,
-];
-const cameraPositionDefault: [number, number, number] = [
-	cameraPositionXDefault,
-	cameraPositionYDefault,
-	cameraPositionZDefault,
-];
-
-const pulsarPeriodStep = 0.01;
-const pulsarPeriodMin = 1.0;
-const pulsarPeriodMax = 10.0;
-
-const pulsarAxisEulerStep = [0.001, 0.001, 0.001];
-const pulsarAxisEulerMin = [-Math.PI, -Math.PI, -Math.PI];
-const pulsarAxisEulerMax = [Math.PI, Math.PI, Math.PI];
-
-const pulsarBeamLatitudeStep = 0.001;
-const pulsarBeamLatitudeMin = 0.0;
-const pulsarBeamLatitudeMax = Math.PI / 2;
-
-const pulsarBeamAngleStep = 0.001;
-const pulsarBeamAngleMin = 0.0;
-const pulsarBeamAngleMax = Math.PI / 8;
 
 export default function App() {
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
@@ -59,9 +43,9 @@ export default function App() {
 	const [pulsarBeamLatitude, setPulsarBeamLatitude] = useState(
 		pulsarBeamLatitudeDefault,
 	);
-	const [pulsarAxisEuler, setPulsarAxisEuler] = useState<
-		[number, number, number]
-	>(pulsarAxisEulerDefault);
+	const [pulsarAxisEuler, setPulsarAxisEuler] = useState<Triplet>(
+		pulsarAxisEulerDefault,
+	);
 	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
 		pulsarBeamAngleDefault,
 	);
@@ -148,9 +132,9 @@ export default function App() {
 						checked={!orbitControlsEnabled}
 						onChange={() => {
 							setOrbitControlsEnabled((prev) => !prev);
-							console.log(
-								`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
-							);
+							// console.log(
+							// 	`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
+							// );
 						}}
 					/>
 					Lock camera
@@ -159,15 +143,17 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarPhase"
 					label="Pulsar phase"
-					min={pulsarPhaseMin}
-					max={pulsarPhaseMax}
+					min={pulsarPhaseXRescale(pulsarPhaseMin)}
+					max={pulsarPhaseXRescale(pulsarPhaseMax)}
 					step={pulsarPhaseStep}
 					value={parseFloat(
-						pulsarPhase.toFixed(getDecimalPlaces(pulsarPhaseStep)),
+						pulsarPhaseXRescale(pulsarPhase).toFixed(
+							getDecimalPlaces(pulsarPhaseStep),
+						),
 					)}
 					disabled={isAnimating}
 					onChange={(e) => {
-						setPulsarPhase(parseFloat(e.target.value));
+						setPulsarPhase(pulsarPhaseXUnrescale(parseFloat(e.target.value)));
 						// if (!isAnimating) console.log(`Pulsar phase: ${e.target.value}`);
 					}}
 				/>

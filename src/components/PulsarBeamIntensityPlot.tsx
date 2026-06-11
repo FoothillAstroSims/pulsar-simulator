@@ -7,19 +7,30 @@ const createPlotlyComponent =
 	factoryImport;
 const Plot = createPlotlyComponent(Plotly);
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DISPLAY_FRAME_RATE, range } from "../utils";
 import {
 	getPulsarBeamDirection,
 	getPulsarBeamIntensity,
-	range,
-	DISPLAY_FRAME_RATE,
-} from "../utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+	type Triplet,
+} from "./utils-pulsar";
+import {
+	pulsarPhaseMax,
+	pulsarPhaseMin,
+	pulsarPhaseStep,
+	pulsarPhaseXRescale,
+	pulsarPhaseXUnrescale,
+} from "./utils-pulsar";
 
-// Pulsar phase range
-export const pulsarPhaseStep = 0.001;
-export const pulsarPhaseMin = 0.0;
-export const pulsarPhaseMax = 2 * Math.PI;
-const x = range(pulsarPhaseMin, pulsarPhaseMax, pulsarPhaseStep);
+const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
+	pulsarPhaseMin,
+	pulsarPhaseMax,
+].map(pulsarPhaseXRescale);
+const x = range(
+	pulsarPhaseMinRescaled,
+	pulsarPhaseMaxRescaled,
+	pulsarPhaseStep,
+);
 
 // Phase-based plot constants
 const Y0 = -(2 ** 51) + 1.5; // Fixed y-values for the timeline in the phase-based plot
@@ -36,9 +47,9 @@ const X_MAX_ALLOWED_TIME_DEFAULT = X_RANGE_LEN_TIME_DEFAULT; // Default x maxall
 // Phase-based pulsar beam intensity plot
 export function PulsarBeamIntensityPlotPhase(props: {
 	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisEuler: [number, number, number];
+	pulsarAxisEuler: Triplet;
 	pulsarBeamLatitude: number;
-	cameraDirection: [number, number, number];
+	cameraDirection: Triplet;
 	pulsarBeamAngle: number;
 	isAnimating: boolean;
 	showPhaseTimeline: boolean; // Show a draggable timeline that matches the pulsar phase
@@ -61,10 +72,12 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	const [y0, setY0] = useState(Y0);
 	const [y1, setY1] = useState(Y1);
 
+	const gdRef = useRef<Plotly.Root | null>(null);
+
 	// Beam intensity values at each pulsar phase
-	const y = x.map((phase) => {
+	const y = x.map((x) => {
 		const dir = getPulsarBeamDirection(
-			phase,
+			pulsarPhaseXUnrescale(x),
 			pulsarAxisEuler,
 			pulsarBeamLatitude,
 		);
@@ -78,6 +91,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		type: "scattergl",
 		mode: "lines",
 		line: {
+			shape: "spline",
 			width: 4,
 		},
 	};
@@ -89,7 +103,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				title: {
 					text: "Phase",
 				},
-				range: [-0.1, 2 * Math.PI + 0.1],
+				range: [pulsarPhaseXRescale(0) - 0.1].map(pulsarPhaseXRescale),
 				griddash: "dash",
 				gridcolor: "lightgray",
 				zeroline: false,
@@ -120,8 +134,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				type: "line",
 				xref: "x",
 				yref: "paper",
-				x0: pulsarPhase,
-				x1: pulsarPhase,
+				x0: pulsarPhaseXRescale(pulsarPhase),
+				x1: pulsarPhaseXRescale(pulsarPhase),
 				y0: y0,
 				y1: y1,
 				line: {
@@ -132,7 +146,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			};
 			if (showPhaseTimelineLabel) {
 				pulsarPhaseTimelineBar.label = {
-					text: `Phase: ${pulsarPhase.toFixed(3)}`,
+					text: `Phase: ${pulsarPhaseXRescale(pulsarPhase).toFixed(3)}`,
 					font: {
 						size: 20,
 						shadow: "lightgray 1px 1px 1px",
@@ -168,15 +182,22 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				if (x0Update !== null && x0Update !== undefined) {
 					// Prevent timeline from being moved out of frame
 					// TODO: Fix bug where moving timeline when it is at the min or max allows it to be moved out of frame
-					if (x0Update <= pulsarPhaseMin) x0Update = pulsarPhaseMin;
-					if (x0Update >= pulsarPhaseMax) x0Update = pulsarPhaseMax;
+					if (x0Update <= pulsarPhaseMinRescaled)
+						x0Update = pulsarPhaseMinRescaled;
+					if (x0Update >= pulsarPhaseMaxRescaled)
+						x0Update = pulsarPhaseMaxRescaled;
 
-					onPulsarPhaseChange?.(x0Update);
+					onPulsarPhaseChange?.(pulsarPhaseXUnrescale(x0Update));
 				}
 			}
 		},
 		[isAnimating, showPhaseTimeline, onPulsarPhaseChange],
 	);
+
+	useEffect(() => {
+		const gd = gdRef.current;
+		if (!gd) return;
+	}, []);
 
 	return (
 		<Plot
@@ -184,6 +205,12 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			layout={layout}
 			config={config}
 			style={{ width: "100%", height: "100%" }} // Required for auto-resizing to be able to take effect
+			onInitialized={(_figure, gd) => {
+				gdRef.current = gd;
+			}}
+			onPurge={() => {
+				gdRef.current = null;
+			}}
 			onRelayout={handleRelayout}
 			useResizeHandler
 		/>
@@ -194,9 +221,9 @@ export function PulsarBeamIntensityPlotPhase(props: {
 export function PulsarBeamIntensityPlotTime(props: {
 	ref?: React.RefObject<Record<string, unknown> | null>;
 	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisEuler: [number, number, number];
+	pulsarAxisEuler: Triplet;
 	pulsarBeamLatitude: number;
-	cameraDirection: [number, number, number];
+	cameraDirection: Triplet;
 	pulsarBeamAngle: number;
 	isAnimating: boolean;
 }) {

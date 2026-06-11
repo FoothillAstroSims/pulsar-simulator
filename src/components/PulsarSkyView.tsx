@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { getPulsarBeamDirection, getPulsarBeamIntensity } from "../utils";
+import { getPulsarBeamDirection, getPulsarBeamIntensity } from "./utils-pulsar";
 
 const pulseColorRGB = "255, 255, 0"; // Pulse color RGB
 const skyColorRGB = "135, 206, 235"; // Sky color RGB

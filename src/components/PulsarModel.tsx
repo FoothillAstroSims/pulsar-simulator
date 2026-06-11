@@ -4,83 +4,39 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { DISPLAY_FRAME_RATE, getMeshDirection } from "../utils";
+import { DISPLAY_FRAME_RATE } from "../utils";
+import {
+	createPulsarBeamGeometry,
+	lightDirectionDefault,
+	pulsarAxisColor,
+	pulsarAxisLineWidth,
+	pulsarBeamColor,
+	pulsarBeamHeight,
+	pulsarBeamTransparency,
+	pulsarBodyColor,
+	pulsarBodyHeightSeg,
+	pulsarBodyRadius,
+	pulsarBodyWidthSeg,
+	pulsarEquatorColor,
+	pulsarEquatorLineWidth,
+	setPulsarBeamsRotation,
+	type Triplet,
+} from "./utils-pulsar";
+import { getMeshDirection } from "./utils-pulsar";
 
 // Pulsar parameters
 export interface PulsarModelProps {
 	pulsarPhase: number; // Rotation around the pulsar's axis
 	pulsarPeriod: number; // Number of seconds for the pulsar to make one revolution around its axis
-	pulsarAxisEuler: [number, number, number]; // Euler angles representing the rotation of the pulsar axis
+	pulsarAxisEuler: Triplet; // Euler angles representing the rotation of the pulsar axis
 	pulsarBeamLatitude: number; // Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator
 	pulsarBeamAngle: number; // Half-angle of the pulsar beams i.e. the angle between the altitude and the slant of the cone representing the beam
-	cameraPosition: [number, number, number]; // Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin
+	cameraPosition: Triplet; // Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin
 	isAnimating: boolean; // Animation toggle
 	orbitControlsEnabled: boolean; // Orbit controls toggle
 	onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
-	onCameraPositionChange?: (pos: [number, number, number]) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
-	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
-}
-
-// Default pulsar parameter values
-export const pulsarPhaseDefault = 0.0;
-export const pulsarPeriodDefault = 4.0;
-export const pulsarAxisEulerXDefault = 0.0;
-export const pulsarAxisEulerYDefault = 0.0;
-export const pulsarAxisEulerZDefault = 0.0;
-export const pulsarBeamLatitudeDefault = 0.0;
-export const pulsarBeamAngleDefault = Math.PI / 24;
-export const isAnimatingDefault = true;
-export const orbitControlsEnabledDefault = false;
-
-// Pulsar model constants - geometry, colors, other visual display parameters
-const pulsarBodyRadius = 5;
-const pulsarBodyWidthSeg = 64;
-const pulsarBodyHeightSeg = 32;
-const pulsarBodyColor = "#3f70bf";
-
-const pulsarBeamHeight = 20;
-const pulsarBeamRadSeg = 32;
-const pulsarBeamHeightSeg = 4;
-const pulsarBeamColor = "#ffffff";
-const pulsarBeamTransparency = 0.5;
-
-const pulsarAxisColor = "#ffffff";
-const pulsarAxisLineWidth = 2;
-
-const pulsarEquatorColor = "#ffffff";
-const pulsarEquatorLineWidth = 2;
-
-// Camera position
-export const cameraPositionXDefault = 1.5 * pulsarBeamHeight;
-export const cameraPositionYDefault = 0.0;
-export const cameraPositionZDefault = 0.0;
-
-// Lighting direction
-const lightDirectionDefault: [number, number, number] = [
-	pulsarBodyRadius * 2,
-	pulsarBodyRadius * 2,
-	-pulsarBodyRadius * 2,
-];
-
-// Create geometry for a pulsar beam
-function createPulsarBeamGeometry(radius: number): THREE.ConeGeometry {
-	return new THREE.ConeGeometry(
-		radius,
-		pulsarBeamHeight,
-		pulsarBeamRadSeg,
-		pulsarBeamHeightSeg,
-		true,
-	).translate(0, -pulsarBeamHeight / 2 - pulsarBodyRadius, 0);
-}
-
-// Set rotation for two pulsar beams
-function setPulsarBeamsRotation(
-	beam1: THREE.Mesh,
-	beam2: THREE.Mesh,
-	latitude: number,
-): void {
-	beam1.rotation.set(0, 0, Math.PI / 2 + latitude);
-	beam2.rotation.set(0, 0, latitude - Math.PI / 2);
+	onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
+	onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
 }
 
 export function PulsarModel(
