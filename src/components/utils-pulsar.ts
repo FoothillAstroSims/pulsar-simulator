@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { range } from "../utils";
+import { getDecimalPlaces, range } from "../utils";
 
 export type Triplet = [number, number, number];
 
@@ -11,28 +11,14 @@ export function unrescale(x: number, scale: number = 1, offset: number = 0) {
 }
 
 // Default values, ranges, and step sizes for each parameter
-export const pulsarPhaseXScale = parseFloat((2 * Math.PI).toFixed(3)) / 360.0;
-export const pulsarPhaseXOffset = -180;
-export function pulsarPhaseXRescale(x: number) {
-	return rescale(x, pulsarPhaseXScale, pulsarPhaseXOffset);
-}
-export function pulsarPhaseXUnrescale(x: number) {
-	return unrescale(x, pulsarPhaseXScale, pulsarPhaseXOffset);
-}
+const radToDegScale = Math.PI / 180.0;
 
 export const pulsarPhaseDefault = 0.0;
 export const pulsarPhaseMin = 0.0;
-export const pulsarPhaseMax = parseFloat((2 * Math.PI).toFixed(3));
+export const pulsarPhaseMax = 2 * Math.PI;
 export const pulsarPhaseStep = 0.001;
-export const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
-	pulsarPhaseMin,
-	pulsarPhaseMax,
-].map(pulsarPhaseXRescale);
-export const pulsarPhaseX = range(
-	pulsarPhaseMin,
-	pulsarPhaseMax,
-	pulsarPhaseStep,
-).map(pulsarPhaseXRescale);
+export const pulsarPhaseXScale = radToDegScale;
+export const pulsarPhaseXOffset = -180;
 
 export const pulsarPeriodDefault = 4.0;
 export const pulsarPeriodMin = 1.0;
@@ -40,23 +26,22 @@ export const pulsarPeriodMax = 10.0;
 export const pulsarPeriodStep = 0.01;
 
 export const pulsarAxisEulerDefault: Triplet = [0.0, 0.0, 0.0];
-export const pulsarAxisEulerMin: Triplet = [-Math.PI, -Math.PI, -Math.PI].map(
-	(angle) => parseFloat(angle.toFixed(3)),
-) as Triplet;
-export const pulsarAxisEulerMax: Triplet = [Math.PI, Math.PI, Math.PI].map(
-	(angle) => parseFloat(angle.toFixed(3)),
-) as Triplet;
-export const pulsarAxisEulerStep: Triplet = [0.001, 0.001, 0.001];
+export const pulsarAxisEulerMin: Triplet = [-Math.PI, -Math.PI, -Math.PI];
+export const pulsarAxisEulerMax: Triplet = [Math.PI, Math.PI, Math.PI];
+export const pulsarAxisEulerStep = 0.001;
+export const pulsarAxisEulerScale = radToDegScale;
 
 export const pulsarBeamLatitudeDefault = 0.0;
 export const pulsarBeamLatitudeMin = 0.0;
-export const pulsarBeamLatitudeMax = parseFloat((Math.PI / 2).toFixed(3));
+export const pulsarBeamLatitudeMax = Math.PI / 2;
 export const pulsarBeamLatitudeStep = 0.001;
+export const pulsarBeamLatitudeScale = radToDegScale;
 
-export const pulsarBeamAngleDefault = parseFloat((Math.PI / 24).toFixed(3));
-export const pulsarBeamAngleMin = 0.0;
-export const pulsarBeamAngleMax = parseFloat((Math.PI / 8).toFixed(3));
+export const pulsarBeamAngleDefault = Math.PI / 24;
+export const pulsarBeamAngleMin = Math.PI / 120;
+export const pulsarBeamAngleMax = Math.PI / 4;
 export const pulsarBeamAngleStep = 0.001;
+export const pulsarBeamAngleScale = radToDegScale;
 
 export const isAnimatingDefault = true;
 export const orbitControlsEnabledDefault = false;
@@ -163,3 +148,87 @@ export function getMeshDirection(
 	mesh.getWorldQuaternion(quaternionRotation);
 	return direction.applyQuaternion(quaternionRotation).toArray();
 }
+
+// Rescaling parameters
+export function pulsarPhaseXRescale(x: number) {
+	return parseFloat(
+		rescale(x, pulsarPhaseXScale, pulsarPhaseXOffset).toFixed(
+			getDecimalPlaces(pulsarPhaseStep),
+		),
+	);
+}
+export function pulsarPhaseXUnrescale(x: number) {
+	return parseFloat(
+		unrescale(x, pulsarPhaseXScale, pulsarPhaseXOffset).toFixed(
+			getDecimalPlaces(pulsarPhaseStep),
+		),
+	);
+}
+export const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
+	pulsarPhaseMin,
+	pulsarPhaseMax,
+].map(pulsarPhaseXRescale);
+export const pulsarPhaseX = range(
+	pulsarPhaseMin,
+	pulsarPhaseMax,
+	pulsarPhaseStep,
+).map(pulsarPhaseXRescale);
+
+export function pulsarAxisEulerRescale(x: number) {
+	return parseFloat(
+		rescale(x, pulsarAxisEulerScale).toFixed(
+			getDecimalPlaces(pulsarAxisEulerStep),
+		),
+	);
+}
+export function pulsarAxisEulerUnrescale(x: number) {
+	return parseFloat(
+		unrescale(x, pulsarAxisEulerScale).toFixed(
+			getDecimalPlaces(pulsarAxisEulerStep),
+		),
+	);
+}
+export const pulsarAxisEulerMinRescaled: Triplet = pulsarAxisEulerMin.map(
+	pulsarAxisEulerRescale,
+) as Triplet;
+export const pulsarAxisEulerMaxRescaled: Triplet = pulsarAxisEulerMax.map(
+	pulsarAxisEulerRescale,
+) as Triplet;
+
+export function pulsarBeamLatitudeRescale(x: number) {
+	return parseFloat(
+		rescale(x, pulsarBeamLatitudeScale).toFixed(
+			getDecimalPlaces(pulsarBeamLatitudeStep),
+		),
+	);
+}
+export function pulsarBeamLatitudeUnrescale(x: number) {
+	return parseFloat(
+		unrescale(x, pulsarBeamLatitudeScale).toFixed(
+			getDecimalPlaces(pulsarBeamLatitudeStep),
+		),
+	);
+}
+export const [pulsarBeamLatitudeMinRescaled, pulsarBeamLatitudeMaxRescaled] = [
+	pulsarBeamLatitudeMin,
+	pulsarBeamLatitudeMax,
+].map(pulsarBeamLatitudeRescale);
+
+export function pulsarBeamAngleRescale(x: number) {
+	return parseFloat(
+		rescale(x, pulsarBeamAngleScale).toFixed(
+			getDecimalPlaces(pulsarBeamAngleStep),
+		),
+	);
+}
+export function pulsarBeamAngleUnrescale(x: number) {
+	return parseFloat(
+		unrescale(x, pulsarBeamAngleScale).toFixed(
+			getDecimalPlaces(pulsarBeamAngleStep),
+		),
+	);
+}
+export const [pulsarBeamAngleMinRescaled, pulsarBeamAngleMaxRescaled] = [
+	pulsarBeamAngleMin,
+	pulsarBeamAngleMax,
+].map(pulsarBeamAngleRescale);

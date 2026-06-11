@@ -12,8 +12,8 @@ import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	getPulsarBeamDirection,
 	getPulsarBeamIntensity,
-	pulsarPhaseMaxRescaled,
-	pulsarPhaseMinRescaled,
+	pulsarPhaseMax,
+	pulsarPhaseMin,
 	pulsarPhaseXRescale,
 	pulsarPhaseXUnrescale,
 	pulsarPhaseX,
@@ -176,10 +176,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				if (x0Update !== null && x0Update !== undefined) {
 					// Prevent timeline from being moved out of frame
 					// TODO: Fix bug where moving timeline when it is at the min or max allows it to be moved out of frame
-					if (x0Update <= pulsarPhaseMinRescaled)
-						x0Update = pulsarPhaseMinRescaled;
-					if (x0Update >= pulsarPhaseMaxRescaled)
-						x0Update = pulsarPhaseMaxRescaled;
+					if (x0Update <= pulsarPhaseMin) x0Update = pulsarPhaseMin;
+					if (x0Update >= pulsarPhaseMax) x0Update = pulsarPhaseMax;
 
 					onPulsarPhaseChange?.(pulsarPhaseXUnrescale(x0Update));
 				}

@@ -11,11 +11,20 @@ export function PulsarParameterInput(props: PulsarParameterInputProps) {
 		<div className="pulsar-parameter-input">
 			{(() => {
 				if (label !== undefined) {
-					return <label htmlFor={name}>{label}</label>;
+					return (
+						<label htmlFor={name} style={{ flex: 1 }}>
+							{label}
+						</label>
+					);
 				}
 			})()}
-			<input type="range" name={name} {...rest} />
-			<input type="number" name={name} {...rest} />
+			<input
+				type="range"
+				name={name}
+				style={{ flex: 3 }}
+				{...rest}
+			/>
+			<input type="number" name={name} style={{ flex: 1 }} {...rest} />
 		</div>
 	);
 }

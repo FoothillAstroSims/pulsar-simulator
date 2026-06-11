@@ -12,30 +12,36 @@ import {
 	isAnimatingDefault,
 	orbitControlsEnabledDefault,
 	pulsarAxisEulerDefault,
-	pulsarAxisEulerMax,
-	pulsarAxisEulerMin,
+	pulsarAxisEulerMaxRescaled,
+	pulsarAxisEulerMinRescaled,
+	pulsarAxisEulerRescale,
 	pulsarAxisEulerStep,
+	pulsarAxisEulerUnrescale,
 	pulsarBeamAngleDefault,
-	pulsarBeamAngleMax,
-	pulsarBeamAngleMin,
+	pulsarBeamAngleMaxRescaled,
+	pulsarBeamAngleMinRescaled,
+	pulsarBeamAngleRescale,
 	pulsarBeamAngleStep,
+	pulsarBeamAngleUnrescale,
 	pulsarBeamLatitudeDefault,
-	pulsarBeamLatitudeMax,
-	pulsarBeamLatitudeMin,
+	pulsarBeamLatitudeMaxRescaled,
+	pulsarBeamLatitudeMinRescaled,
+	pulsarBeamLatitudeRescale,
 	pulsarBeamLatitudeStep,
+	pulsarBeamLatitudeUnrescale,
 	pulsarPeriodDefault,
 	pulsarPeriodMax,
 	pulsarPeriodMin,
 	pulsarPeriodStep,
 	pulsarPhaseDefault,
-	pulsarPhaseMax,
-	pulsarPhaseMin,
+	pulsarPhaseMaxRescaled,
+	pulsarPhaseMinRescaled,
 	pulsarPhaseStep,
 	pulsarPhaseXRescale,
 	pulsarPhaseXUnrescale,
 	type Triplet,
 } from "./components/utils-pulsar";
-import { createKeyDownEventHandler, getDecimalPlaces } from "./utils";
+import { createKeyDownEventHandler } from "./utils";
 
 export default function App() {
 	const [pulsarPhase, setPulsarPhase] = useState(pulsarPhaseDefault);
@@ -105,52 +111,49 @@ export default function App() {
 				<p>Foothill AstroSims: Pulsar Beam Intensity</p>
 			</div>
 
-			<div id="pulsar-parameters">
-				<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
-					{isAnimating ? "Stop" : "Start"}
-				</button>
-				<button
-					type="button"
-					disabled={isAnimating}
-					onClick={() => resetPulsarParameters()}
-				>
-					Reset parameters
-				</button>
-				<button
-					type="button"
-					disabled={!orbitControlsEnabled}
-					onClick={() => {
-						(pulsarModelRef.current?.resetCamera as () => void)();
-						// console.log("Camera reset");
-					}}
-				>
-					Reset camera
-				</button>
-				<label>
-					<input
-						type="checkbox"
-						checked={!orbitControlsEnabled}
-						onChange={() => {
-							setOrbitControlsEnabled((prev) => !prev);
-							// console.log(
-							// 	`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
-							// );
+			<div className="pulsar-parameters">
+				<div style={{ flex: 1, display: "flex", justifyItems: "center" }}>
+					<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
+						{isAnimating ? "Stop" : "Start"}
+					</button>
+					<button
+						type="button"
+						disabled={isAnimating}
+						onClick={() => resetPulsarParameters()}
+					>
+						Reset parameters
+					</button>
+					<button
+						type="button"
+						disabled={!orbitControlsEnabled}
+						onClick={() => {
+							(pulsarModelRef.current?.resetCamera as () => void)();
+							// console.log("Camera reset");
 						}}
-					/>
-					Lock camera
-				</label>
-				<br />
+					>
+						Reset camera
+					</button>
+					<label>
+						<input
+							type="checkbox"
+							checked={!orbitControlsEnabled}
+							onChange={() => {
+								setOrbitControlsEnabled((prev) => !prev);
+								// console.log(
+								// 	`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
+								// );
+							}}
+						/>
+						Lock camera
+					</label>
+				</div>
 				<PulsarParameterInput
 					name="pulsarPhase"
 					label="Phase"
-					min={pulsarPhaseXRescale(pulsarPhaseMin)}
-					max={pulsarPhaseXRescale(pulsarPhaseMax)}
+					min={pulsarPhaseMinRescaled}
+					max={pulsarPhaseMaxRescaled}
 					step={pulsarPhaseStep}
-					value={parseFloat(
-						pulsarPhaseXRescale(pulsarPhase).toFixed(
-							getDecimalPlaces(pulsarPhaseStep),
-						),
-					)}
+					value={pulsarPhaseXRescale(pulsarPhase)}
 					disabled={isAnimating}
 					onChange={(e) => {
 						if (e.target.value)
@@ -175,7 +178,7 @@ export default function App() {
 					label="Position angle"
 					min={pulsarAxisEulerMin[0]}
 					max={pulsarAxisEulerMax[0]}
-					step={pulsarAxisEulerStep[0]}
+					step={pulsarAxisEulerStep}
 					value={pulsarAxisEuler[0]}
 					onChange={(e) => {
 						setPulsarAxisEuler([
@@ -192,7 +195,7 @@ export default function App() {
 					label="Y"
 					min={pulsarAxisEulerMin[1]}
 					max={pulsarAxisEulerMax[1]}
-					step={pulsarAxisEulerStep[1]}
+					step={pulsarAxisEulerStep}
 					value={pulsarAxisEuler[1]}
 					onChange={(e) => {
 						setPulsarAxisEuler([
@@ -206,16 +209,16 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarInclinationAngle"
 					label="Inclination angle"
-					min={pulsarAxisEulerMin[2]}
-					max={pulsarAxisEulerMax[2]}
-					step={pulsarAxisEulerStep[2]}
-					value={pulsarAxisEuler[2]}
+					min={pulsarAxisEulerMinRescaled[2]}
+					max={pulsarAxisEulerMaxRescaled[2]}
+					step={pulsarAxisEulerStep}
+					value={pulsarAxisEulerRescale(pulsarAxisEuler[2])}
 					onChange={(e) => {
 						if (e.target.value)
 							setPulsarAxisEuler([
 								pulsarAxisEuler[0],
 								pulsarAxisEuler[1],
-								parseFloat(e.target.value),
+								pulsarAxisEulerUnrescale(parseFloat(e.target.value)),
 							]);
 						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
@@ -223,25 +226,30 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarBeamLatitude"
 					label="Beam latitude"
-					min={pulsarBeamLatitudeMin}
-					max={pulsarBeamLatitudeMax}
+					min={pulsarBeamLatitudeMinRescaled}
+					max={pulsarBeamLatitudeMaxRescaled}
 					step={pulsarBeamLatitudeStep}
-					value={pulsarBeamLatitude}
+					value={pulsarBeamLatitudeRescale(pulsarBeamLatitude)}
 					onChange={(e) => {
 						if (e.target.value)
-							setPulsarBeamLatitude(parseFloat(e.target.value));
+							setPulsarBeamLatitude(
+								pulsarBeamLatitudeUnrescale(parseFloat(e.target.value)),
+							);
 						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
 				/>{" "}
 				<PulsarParameterInput
 					name="pulsarBeamAngle"
 					label="Beam angle"
-					min={pulsarBeamAngleMin}
-					max={pulsarBeamAngleMax}
+					min={pulsarBeamAngleMinRescaled}
+					max={pulsarBeamAngleMaxRescaled}
 					step={pulsarBeamAngleStep}
-					value={pulsarBeamAngle}
+					value={pulsarBeamAngleRescale(pulsarBeamAngle)}
 					onChange={(e) => {
-						if (e.target.value) setPulsarBeamAngle(parseFloat(e.target.value));
+						if (e.target.value)
+							setPulsarBeamAngle(
+								pulsarBeamAngleUnrescale(parseFloat(e.target.value)),
+							);
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
