@@ -8,29 +8,17 @@ const createPlotlyComponent =
 const Plot = createPlotlyComponent(Plotly);
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DISPLAY_FRAME_RATE, range } from "../utils";
+import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	getPulsarBeamDirection,
 	getPulsarBeamIntensity,
-	type Triplet,
-} from "./utils-pulsar";
-import {
-	pulsarPhaseMax,
-	pulsarPhaseMin,
-	pulsarPhaseStep,
+	pulsarPhaseMaxRescaled,
+	pulsarPhaseMinRescaled,
 	pulsarPhaseXRescale,
 	pulsarPhaseXUnrescale,
+	pulsarPhaseX,
+	type Triplet,
 } from "./utils-pulsar";
-
-const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
-	pulsarPhaseMin,
-	pulsarPhaseMax,
-].map(pulsarPhaseXRescale);
-const x = range(
-	pulsarPhaseMinRescaled,
-	pulsarPhaseMaxRescaled,
-	pulsarPhaseStep,
-);
 
 // Phase-based plot constants
 const Y0 = -(2 ** 51) + 1.5; // Fixed y-values for the timeline in the phase-based plot
@@ -75,7 +63,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	const gdRef = useRef<Plotly.Root | null>(null);
 
 	// Beam intensity values at each pulsar phase
-	const y = x.map((x) => {
+	const pulsarPhaseY = pulsarPhaseX.map((x) => {
 		const dir = getPulsarBeamDirection(
 			pulsarPhaseXUnrescale(x),
 			pulsarAxisEuler,
@@ -86,8 +74,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 
 	// Data
 	const data: Partial<Plotly.Data> = {
-		x: x,
-		y: y,
+		x: pulsarPhaseX,
+		y: pulsarPhaseY,
 		type: "scattergl",
 		mode: "lines",
 		line: {
@@ -103,7 +91,10 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				title: {
 					text: "Phase",
 				},
-				range: [pulsarPhaseXRescale(0) - 0.1].map(pulsarPhaseXRescale),
+				range: [
+					pulsarPhaseXRescale(-0.01),
+					pulsarPhaseXRescale(2 * Math.PI + 0.01),
+				],
 				griddash: "dash",
 				gridcolor: "lightgray",
 				zeroline: false,
@@ -177,6 +168,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 
 				// Update pulsar phase to where the timeline ends up
 				const plotlyRelayoutEvent = e as unknown as Record<string, unknown>;
+				// console.log(e);
 				let x0Update = plotlyRelayoutEvent["shapes[0].x0"] as number | null;
 
 				if (x0Update !== null && x0Update !== undefined) {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { range } from "../utils";
 
 export type Triplet = [number, number, number];
 
@@ -7,7 +8,8 @@ export const pulsarPhaseDefault = 0.0;
 export const pulsarPhaseMin = 0.0;
 export const pulsarPhaseMax = 2 * Math.PI;
 export const pulsarPhaseStep = 0.001;
-export const pulsarPhaseXScale = 2 * Math.PI; // Phase rescaling helper functions, for plotting and range inputs
+
+export const pulsarPhaseXScale = 2 * Math.PI / 360.0; // Phase rescaling, for plotting and range inputs
 export const pulsarPhaseXOffset = 0;
 export function pulsarPhaseXRescale(x: number) {
 	return x / pulsarPhaseXScale + pulsarPhaseXOffset;
@@ -15,6 +17,15 @@ export function pulsarPhaseXRescale(x: number) {
 export function pulsarPhaseXUnrescale(x: number) {
 	return pulsarPhaseXScale * (x - pulsarPhaseXOffset);
 }
+export const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
+	pulsarPhaseMin,
+	pulsarPhaseMax,
+].map(pulsarPhaseXRescale);
+export const pulsarPhaseX = range(
+	pulsarPhaseMin,
+	pulsarPhaseMax,
+	pulsarPhaseStep,
+).map(pulsarPhaseXRescale);
 
 export const pulsarPeriodDefault = 4.0;
 export const pulsarPeriodMin = 1.0;
@@ -97,8 +108,8 @@ export function getPulsarBeamDirection(
 	pulsarAxisEuler: Triplet,
 	pulsarBeamLatitude: number,
 	pulsarBeamDirectionXZInitial: [number, number] = [
-		Math.cos(pulsarBeamsRotationInitial),
-		-Math.sin(pulsarBeamsRotationInitial),
+		-Math.cos(pulsarBeamsRotationInitial),
+		Math.sin(pulsarBeamsRotationInitial),
 	],
 ): Triplet {
 	const [x, z] = pulsarBeamDirectionXZInitial;

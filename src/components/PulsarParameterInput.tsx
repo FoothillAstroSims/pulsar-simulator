@@ -8,7 +8,7 @@ export function PulsarParameterInput(props: PulsarParameterInputProps) {
 	const { label, name, ...rest } = props;
 
 	return (
-		<>
+		<div className="pulsar-parameter-input">
 			{(() => {
 				if (label !== undefined) {
 					return <label htmlFor={name}>{label}</label>;
@@ -16,6 +16,6 @@ export function PulsarParameterInput(props: PulsarParameterInputProps) {
 			})()}
 			<input type="range" name={name} {...rest} />
 			<input type="number" name={name} {...rest} />
-		</>
+		</div>
 	);
 }

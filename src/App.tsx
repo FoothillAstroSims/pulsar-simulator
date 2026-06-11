@@ -102,22 +102,12 @@ export default function App() {
 	return (
 		<>
 			<div>
-				<p>Test</p>
+				<p>Foothill AstroSims: Pulsar Beam Intensity</p>
 			</div>
 
 			<div id="pulsar-parameters">
-				<input type="text" />
 				<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
 					{isAnimating ? "Stop" : "Start"}
-				</button>
-				<button
-					type="button"
-					onClick={() => {
-						(pulsarModelRef.current?.resetCamera as () => void)();
-						// console.log("Camera reset");
-					}}
-				>
-					Reset camera
 				</button>
 				<button
 					type="button"
@@ -125,6 +115,16 @@ export default function App() {
 					onClick={() => resetPulsarParameters()}
 				>
 					Reset parameters
+				</button>
+				<button
+					type="button"
+					disabled={!orbitControlsEnabled}
+					onClick={() => {
+						(pulsarModelRef.current?.resetCamera as () => void)();
+						// console.log("Camera reset");
+					}}
+				>
+					Reset camera
 				</button>
 				<label>
 					<input
@@ -142,7 +142,7 @@ export default function App() {
 				<br />
 				<PulsarParameterInput
 					name="pulsarPhase"
-					label="Pulsar phase"
+					label="Phase"
 					min={pulsarPhaseXRescale(pulsarPhaseMin)}
 					max={pulsarPhaseXRescale(pulsarPhaseMax)}
 					step={pulsarPhaseStep}
@@ -156,11 +156,10 @@ export default function App() {
 						setPulsarPhase(pulsarPhaseXUnrescale(parseFloat(e.target.value)));
 						// if (!isAnimating) console.log(`Pulsar phase: ${e.target.value}`);
 					}}
-				/>
-				<br />
+				/>{" "}
 				<PulsarParameterInput
 					name="pulsarPeriod"
-					label="Pulsar period"
+					label="Period"
 					min={pulsarPeriodMin}
 					max={pulsarPeriodMax}
 					step={pulsarPeriodStep}
@@ -170,8 +169,7 @@ export default function App() {
 						// console.log(`Pulsar period: ${e.target.value}`);
 					}}
 				/>
-				<br />
-				<PulsarParameterInput
+				{/* <PulsarParameterInput
 					name="pulsarPositionAngle"
 					label="Position angle"
 					min={pulsarAxisEulerMin[0]}
@@ -187,6 +185,7 @@ export default function App() {
 						// console.log(`Pulsar position angle (Euler X): ${e.target.value}`);
 					}}
 				/>
+				{" "} */}
 				{/* <PulsarParameterInput
 					name="pulsarAxisInclinationY"
 					label="Y"
@@ -218,8 +217,7 @@ export default function App() {
 						]);
 						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
-				/>
-				<br />
+				/>{" "}
 				<PulsarParameterInput
 					name="pulsarBeamLatitude"
 					label="Beam latitude"
@@ -231,8 +229,7 @@ export default function App() {
 						setPulsarBeamLatitude(parseFloat(e.target.value));
 						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
-				/>
-				<br />
+				/>{" "}
 				<PulsarParameterInput
 					name="pulsarBeamAngle"
 					label="Beam angle"
