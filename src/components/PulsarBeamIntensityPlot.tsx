@@ -17,6 +17,8 @@ import {
 	pulsarPhaseXRescale,
 	pulsarPhaseXUnrescale,
 	pulsarPhaseX,
+	pulsarPhaseXScale,
+	unrescale,
 	type Triplet,
 } from "./utils-pulsar";
 
@@ -26,7 +28,7 @@ const Y1 = 2 ** 51;
 
 // Time-based plot constants
 const MAX_POINTS = 6 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
-const X_RANGE_LEN_TIME_DEFAULT = MAX_POINTS; // Default x range length
+const X_RANGE_LEN_TIME_DEFAULT = MAX_POINTS / DISPLAY_FRAME_RATE; // Default x range length
 const X_RANGE_TIME_DEFAULT: [number, number] = [-0.1, X_RANGE_LEN_TIME_DEFAULT]; // Default x range
 const Y_RANGE_TIME_DEFAULT: [number, number] = [-0.01, 1.05]; // Default y range
 const X_MIN_ALLOWED_TIME_DEFAULT = 0; // Default x minallowed
@@ -65,7 +67,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	// Beam intensity values at each pulsar phase
 	const pulsarPhaseY = pulsarPhaseX.map((x) => {
 		const dir = getPulsarBeamDirection(
-			pulsarPhaseXUnrescale(x),
+			unrescale(x, pulsarPhaseXScale),
 			pulsarAxisEuler,
 			pulsarBeamLatitude,
 		);
@@ -362,7 +364,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 			pulsarBeamAngle !== undefined
 		) {
 			xCounterRef.current += 1; // Increase x-coordinate by one
-			const xUpdate = xCounterRef.current; // Get updated x-coordinate
+			const xUpdate = xCounterRef.current / 60.0; // Get updated x-coordinate
 			const xRangeLen = xRangeLenRef.current; // Get the current range length
 
 			// Change x range if it exceeds the current range length. This causes the plot to scroll continuously

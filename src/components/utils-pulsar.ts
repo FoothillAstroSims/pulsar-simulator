@@ -3,20 +3,27 @@ import { range } from "../utils";
 
 export type Triplet = [number, number, number];
 
-// Default values, ranges, and step sizes for each parameter
-export const pulsarPhaseDefault = 0.0;
-export const pulsarPhaseMin = 0.0;
-export const pulsarPhaseMax = 2 * Math.PI;
-export const pulsarPhaseStep = 0.001;
+export function rescale(x: number, scale: number = 1, offset: number = 0) {
+	return x / scale + offset;
+}
+export function unrescale(x: number, scale: number = 1, offset: number = 0) {
+	return scale * (x - offset);
+}
 
-export const pulsarPhaseXScale = 2 * Math.PI / 360.0; // Phase rescaling, for plotting and range inputs
-export const pulsarPhaseXOffset = 0;
+// Default values, ranges, and step sizes for each parameter
+export const pulsarPhaseXScale = parseFloat((2 * Math.PI).toFixed(3)) / 360.0;
+export const pulsarPhaseXOffset = -180;
 export function pulsarPhaseXRescale(x: number) {
-	return x / pulsarPhaseXScale + pulsarPhaseXOffset;
+	return rescale(x, pulsarPhaseXScale, pulsarPhaseXOffset);
 }
 export function pulsarPhaseXUnrescale(x: number) {
-	return pulsarPhaseXScale * (x - pulsarPhaseXOffset);
+	return unrescale(x, pulsarPhaseXScale, pulsarPhaseXOffset);
 }
+
+export const pulsarPhaseDefault = 0.0;
+export const pulsarPhaseMin = 0.0;
+export const pulsarPhaseMax = parseFloat((2 * Math.PI).toFixed(3));
+export const pulsarPhaseStep = 0.001;
 export const [pulsarPhaseMinRescaled, pulsarPhaseMaxRescaled] = [
 	pulsarPhaseMin,
 	pulsarPhaseMax,
@@ -33,18 +40,22 @@ export const pulsarPeriodMax = 10.0;
 export const pulsarPeriodStep = 0.01;
 
 export const pulsarAxisEulerDefault: Triplet = [0.0, 0.0, 0.0];
-export const pulsarAxisEulerMin: Triplet = [-Math.PI, -Math.PI, -Math.PI];
-export const pulsarAxisEulerMax: Triplet = [Math.PI, Math.PI, Math.PI];
+export const pulsarAxisEulerMin: Triplet = [-Math.PI, -Math.PI, -Math.PI].map(
+	(angle) => parseFloat(angle.toFixed(3)),
+) as Triplet;
+export const pulsarAxisEulerMax: Triplet = [Math.PI, Math.PI, Math.PI].map(
+	(angle) => parseFloat(angle.toFixed(3)),
+) as Triplet;
 export const pulsarAxisEulerStep: Triplet = [0.001, 0.001, 0.001];
 
 export const pulsarBeamLatitudeDefault = 0.0;
 export const pulsarBeamLatitudeMin = 0.0;
-export const pulsarBeamLatitudeMax = Math.PI / 2;
+export const pulsarBeamLatitudeMax = parseFloat((Math.PI / 2).toFixed(3));
 export const pulsarBeamLatitudeStep = 0.001;
 
-export const pulsarBeamAngleDefault = Math.PI / 24;
+export const pulsarBeamAngleDefault = parseFloat((Math.PI / 24).toFixed(3));
 export const pulsarBeamAngleMin = 0.0;
-export const pulsarBeamAngleMax = Math.PI / 8;
+export const pulsarBeamAngleMax = parseFloat((Math.PI / 8).toFixed(3));
 export const pulsarBeamAngleStep = 0.001;
 
 export const isAnimatingDefault = true;
@@ -61,7 +72,7 @@ export const pulsarBeamRadSeg = 32;
 export const pulsarBeamHeightSeg = 4;
 export const pulsarBeamColor = "#ffffff";
 export const pulsarBeamTransparency = 0.5;
-export const pulsarBeamsRotationInitial = Math.PI / 2;
+export const pulsarBeamsRotationInitial = Math.PI;
 
 export const pulsarAxisColor = "#ffffff";
 export const pulsarAxisLineWidth = 2;

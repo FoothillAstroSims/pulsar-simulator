@@ -153,7 +153,8 @@ export default function App() {
 					)}
 					disabled={isAnimating}
 					onChange={(e) => {
-						setPulsarPhase(pulsarPhaseXUnrescale(parseFloat(e.target.value)));
+						if (e.target.value)
+							setPulsarPhase(pulsarPhaseXUnrescale(parseFloat(e.target.value)));
 						// if (!isAnimating) console.log(`Pulsar phase: ${e.target.value}`);
 					}}
 				/>{" "}
@@ -165,7 +166,7 @@ export default function App() {
 					step={pulsarPeriodStep}
 					value={pulsarPeriod}
 					onChange={(e) => {
-						setPulsarPeriod(parseFloat(e.target.value));
+						if (e.target.value) setPulsarPeriod(parseFloat(e.target.value));
 						// console.log(`Pulsar period: ${e.target.value}`);
 					}}
 				/>
@@ -210,11 +211,12 @@ export default function App() {
 					step={pulsarAxisEulerStep[2]}
 					value={pulsarAxisEuler[2]}
 					onChange={(e) => {
-						setPulsarAxisEuler([
-							pulsarAxisEuler[0],
-							pulsarAxisEuler[1],
-							parseFloat(e.target.value),
-						]);
+						if (e.target.value)
+							setPulsarAxisEuler([
+								pulsarAxisEuler[0],
+								pulsarAxisEuler[1],
+								parseFloat(e.target.value),
+							]);
 						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
 				/>{" "}
@@ -226,7 +228,8 @@ export default function App() {
 					step={pulsarBeamLatitudeStep}
 					value={pulsarBeamLatitude}
 					onChange={(e) => {
-						setPulsarBeamLatitude(parseFloat(e.target.value));
+						if (e.target.value)
+							setPulsarBeamLatitude(parseFloat(e.target.value));
 						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
 				/>{" "}
@@ -238,7 +241,7 @@ export default function App() {
 					step={pulsarBeamAngleStep}
 					value={pulsarBeamAngle}
 					onChange={(e) => {
-						setPulsarBeamAngle(parseFloat(e.target.value));
+						if (e.target.value) setPulsarBeamAngle(parseFloat(e.target.value));
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
