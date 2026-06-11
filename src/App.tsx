@@ -3,29 +3,28 @@ import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
 	PulsarBeamIntensityPlotTime,
-	pulsarPhaseStep,
-	pulsarPhaseMin,
 	pulsarPhaseMax,
-	type PulsarPlotTimeRef,
+	pulsarPhaseMin,
+	pulsarPhaseStep,
 } from "./components/PulsarBeamIntensityPlot";
-import type { PulsarModelRef } from "./components/PulsarModel";
 import {
 	cameraPositionXDefault,
 	cameraPositionYDefault,
 	cameraPositionZDefault,
 	isAnimatingDefault,
 	orbitControlsEnabledDefault,
-	PulsarModel,
 	pulsarAxisEulerXDefault,
 	pulsarAxisEulerYDefault,
 	pulsarAxisEulerZDefault,
 	pulsarBeamAngleDefault,
 	pulsarBeamLatitudeDefault,
+	PulsarModel,
 	pulsarPeriodDefault,
 	pulsarPhaseDefault,
 } from "./components/PulsarModel";
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
-import { getDecimalPlaces, createKeyDownEventHandler } from "./utils";
+import { createKeyDownEventHandler, getDecimalPlaces } from "./utils";
+import { PulsarSkyView } from "./components/PulsarSkyView";
 
 const pulsarAxisEulerDefault: [number, number, number] = [
 	pulsarAxisEulerXDefault,
@@ -74,8 +73,8 @@ export default function App() {
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
 	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
 
-	const pulsarModelRef = useRef<PulsarModelRef | null>(null);
-	const pulsarPlotTimeRef = useRef<PulsarPlotTimeRef | null>(null);
+	const pulsarModelRef = useRef<Record<string, unknown> | null>(null);
+	const pulsarPlotTimeRef = useRef<Record<string, unknown> | null>(null);
 
 	const resetPulsarParameters = useCallback(() => {
 		if (!isAnimating) {
@@ -98,7 +97,7 @@ export default function App() {
 
 		// Reset camera
 		const resetCameraHandler = createKeyDownEventHandler(["c", "C"], () =>
-			pulsarModelRef.current?.resetCamera(),
+			(pulsarModelRef.current?.resetCamera as () => void)(),
 		);
 		window.addEventListener("keydown", resetCameraHandler);
 
@@ -122,7 +121,7 @@ export default function App() {
 				<p>Test</p>
 			</div>
 
-			<div id="pulsarParameters">
+			<div id="pulsar-parameters">
 				<input type="text" />
 				<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
 					{isAnimating ? "Stop" : "Start"}
@@ -130,7 +129,7 @@ export default function App() {
 				<button
 					type="button"
 					onClick={() => {
-						pulsarModelRef.current?.resetCamera();
+						(pulsarModelRef.current?.resetCamera as () => void)();
 						// console.log("Camera reset");
 					}}
 				>
@@ -263,6 +262,7 @@ export default function App() {
 			</div>
 
 			<div
+				className="pulsar-main"
 				style={{
 					display: "flex",
 					flexDirection: "row",
@@ -300,7 +300,7 @@ export default function App() {
 					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotPhase
 							pulsarPhase={pulsarPhase}
-							pulsarAxisInclination={pulsarAxisEuler}
+							pulsarAxisEuler={pulsarAxisEuler}
 							pulsarBeamLatitude={pulsarBeamLatitude}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
@@ -333,7 +333,7 @@ export default function App() {
 						<PulsarBeamIntensityPlotTime
 							ref={pulsarPlotTimeRef}
 							pulsarPhase={pulsarPhase}
-							pulsarAxisInclination={pulsarAxisEuler}
+							pulsarAxisEuler={pulsarAxisEuler}
 							pulsarBeamLatitude={pulsarBeamLatitude}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
@@ -344,11 +344,20 @@ export default function App() {
 						<button
 							type="button"
 							onClick={() => {
-								pulsarPlotTimeRef.current?.resetPlot();
+								(pulsarPlotTimeRef.current?.resetPlot as () => void)();
 							}}
 						>
 							Reset
 						</button>
+					</div>
+					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "5px" }}>
+						<PulsarSkyView
+							pulsarPhase={pulsarPhase}
+							pulsarAxisEuler={pulsarAxisEuler}
+							pulsarBeamLatitude={pulsarBeamLatitude}
+							cameraDirection={cameraPosition}
+							pulsarBeamAngle={pulsarBeamAngle}
+						/>
 					</div>
 				</div>
 			</div>

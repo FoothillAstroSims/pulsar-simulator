@@ -16,7 +16,7 @@ export function range(start: number, stop: number, step: number): number[] {
 // Formula to calculate the direction of the pulsar beam given the initial direction, phase, axis inclination, and latitude
 export function getPulsarBeamDirection(
 	pulsarPhase: number,
-	pulsarAxisInclination: [number, number, number],
+	pulsarAxisEuler: [number, number, number],
 	pulsarBeamLatitude: number,
 	pulsarBeamDirectionXZInitial: [number, number] = [-1, 0],
 ): [number, number, number] {
@@ -29,7 +29,7 @@ export function getPulsarBeamDirection(
 		(-x * Math.sin(pulsarPhase) + z * Math.cos(pulsarPhase)) *
 			Math.cos(pulsarBeamLatitude),
 	)
-		.applyEuler(new THREE.Euler(...pulsarAxisInclination))
+		.applyEuler(new THREE.Euler(...pulsarAxisEuler))
 		.toArray();
 }
 

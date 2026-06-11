@@ -21,11 +21,6 @@ export interface PulsarModelProps {
 	onPulsarBeamDirectionChange?: (dir: [number, number, number]) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
 }
 
-// Parameters and methods to expose to the parent node
-export interface PulsarModelRef {
-	resetCamera: () => void; // Reset camera to original position
-}
-
 // Default pulsar parameter values
 export const pulsarPhaseDefault = 0.0;
 export const pulsarPeriodDefault = 4.0;
@@ -90,7 +85,7 @@ function setPulsarBeamsRotation(
 
 export function PulsarModel(
 	props: PulsarModelProps & {
-		ref?: React.RefObject<PulsarModelRef | null>;
+		ref?: React.RefObject<Record<string, unknown> | null>;
 	},
 ) {
 	const {
@@ -386,10 +381,10 @@ export function PulsarModel(
 
 		if (isAnimating) {
 			modelRef.current?.startAnimation();
-			console.log("Animation started");
+			// console.log("Animation started");
 		} else {
 			modelRef.current?.stopAnimation();
-			console.log("Animation stopped");
+			// console.log("Animation stopped");
 		}
 	}, [isAnimating]);
 
@@ -413,7 +408,6 @@ export function PulsarModel(
 
 		if (scene && camera && renderer) {
 			camera.position.set(...cameraPosition);
-			console.log("test");
 			renderer.render(scene, camera);
 		}
 	}, [cameraPosition]);

@@ -15,11 +15,6 @@ import {
 } from "../utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-// Parameters and methods from the time-based plot to expose to the parent node
-export interface PulsarPlotTimeRef {
-	resetPlot: () => void; // Clear the plot and reset the x range
-}
-
 // Pulsar phase range
 export const pulsarPhaseStep = 0.001;
 export const pulsarPhaseMin = 0.0;
@@ -41,7 +36,7 @@ const X_MAX_ALLOWED_TIME_DEFAULT = X_RANGE_LEN_TIME_DEFAULT; // Default x maxall
 // Phase-based pulsar beam intensity plot
 export function PulsarBeamIntensityPlotPhase(props: {
 	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisInclination: [number, number, number];
+	pulsarAxisEuler: [number, number, number];
 	pulsarBeamLatitude: number;
 	cameraDirection: [number, number, number];
 	pulsarBeamAngle: number;
@@ -52,7 +47,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 }) {
 	const {
 		pulsarPhase,
-		pulsarAxisInclination,
+		pulsarAxisEuler,
 		pulsarBeamLatitude,
 		cameraDirection,
 		pulsarBeamAngle,
@@ -66,11 +61,11 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	const [y0, setY0] = useState(Y0);
 	const [y1, setY1] = useState(Y1);
 
-	// Graph of beam intensity
+	// Beam intensity values at each pulsar phase
 	const y = x.map((phase) => {
 		const dir = getPulsarBeamDirection(
 			phase,
-			pulsarAxisInclination,
+			pulsarAxisEuler,
 			pulsarBeamLatitude,
 		);
 		return getPulsarBeamIntensity(dir, cameraDirection, pulsarBeamAngle);
@@ -197,9 +192,9 @@ export function PulsarBeamIntensityPlotPhase(props: {
 
 // Live updating time-based pulsar beam intensity plot
 export function PulsarBeamIntensityPlotTime(props: {
-	ref?: React.RefObject<PulsarPlotTimeRef | null>;
+	ref?: React.RefObject<Record<string, unknown> | null>;
 	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisInclination: [number, number, number];
+	pulsarAxisEuler: [number, number, number];
 	pulsarBeamLatitude: number;
 	cameraDirection: [number, number, number];
 	pulsarBeamAngle: number;
@@ -208,7 +203,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 	const {
 		ref,
 		pulsarPhase,
-		pulsarAxisInclination,
+		pulsarAxisEuler,
 		pulsarBeamLatitude,
 		cameraDirection,
 		pulsarBeamAngle,
@@ -227,7 +222,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 				getPulsarBeamIntensity(
 					getPulsarBeamDirection(
 						pulsarPhase,
-						pulsarAxisInclination,
+						pulsarAxisEuler,
 						pulsarBeamLatitude,
 					),
 					cameraDirection,
@@ -309,7 +304,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 								getPulsarBeamIntensity(
 									getPulsarBeamDirection(
 										pulsarPhase,
-										pulsarAxisInclination,
+										pulsarAxisEuler,
 										pulsarBeamLatitude,
 									),
 									cameraDirection,
@@ -330,7 +325,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 		};
 	}, [
 		cameraDirection,
-		pulsarAxisInclination,
+		pulsarAxisEuler,
 		pulsarBeamAngle,
 		pulsarBeamLatitude,
 		pulsarPhase,
@@ -369,7 +364,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 							getPulsarBeamIntensity(
 								getPulsarBeamDirection(
 									pulsarPhase,
-									pulsarAxisInclination,
+									pulsarAxisEuler,
 									pulsarBeamLatitude,
 								),
 								cameraDirection,
@@ -383,7 +378,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 		}
 	}, [
 		pulsarPhase,
-		pulsarAxisInclination,
+		pulsarAxisEuler,
 		pulsarBeamLatitude,
 		cameraDirection,
 		pulsarBeamAngle,
