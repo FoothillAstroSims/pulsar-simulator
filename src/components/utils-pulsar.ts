@@ -10,126 +10,132 @@ export function unrescale(x: number, scale: number = 1, offset: number = 0) {
 	return scale * (x - offset);
 }
 
+const DEG_TO_RAG_SCALE = 180 / Math.PI;
+
 // Default values, ranges, and step sizes for each parameter
-const degToRadScale = 180 / Math.PI;
-
-export const pulsarPhaseDefault = 0.0;
-export const pulsarPhaseMin = -180;
-export const pulsarPhaseMax = 180;
-export const pulsarPhaseStep = 0.1;
-export const pulsarPhaseX = range(
-	pulsarPhaseMin,
-	pulsarPhaseMax,
-	pulsarPhaseStep,
+export const PULSAR_PHASE_DEG_DEFAULT = 0.0;
+export const PULSAR_PHASE_DEG_MIN = -180;
+export const PULSAR_PHASE_DEF_MAX = 180;
+export const PULSAR_PHASE_DEG_STEP = 0.1;
+export const PULSAR_PHASE_DEG_XAXIS = range(
+	PULSAR_PHASE_DEG_MIN,
+	PULSAR_PHASE_DEF_MAX,
+	PULSAR_PHASE_DEG_STEP,
 );
-export const pulsarPhaseScale = degToRadScale;
-export const pulsarPhaseOffset = Math.PI;
-export const pulsarPhaseRescale = (x: number) =>
-	rescale(x, pulsarPhaseScale, pulsarPhaseOffset);
-export const pulsarPhaseUnrescale = (x: number) =>
-	unrescale(x, pulsarPhaseScale, pulsarPhaseOffset);
+export const PULSAR_PHASE_OFFSET = Math.PI;
+export const pulsarPhaseDegToRad = (x: number) =>
+	rescale(x, DEG_TO_RAG_SCALE, PULSAR_PHASE_OFFSET);
+export const pulsarPhaseRadToDeg = (x: number) =>
+	unrescale(x, DEG_TO_RAG_SCALE, PULSAR_PHASE_OFFSET);
 
-export const pulsarPeriodDefault = 4;
-export const pulsarPeriodMin = 1;
-export const pulsarPeriodMax = 10;
-export const pulsarPeriodStep = 0.01;
+export const PULSAR_PERIOD_DEFAULT = 4;
+export const PULSAR_PERIOD_MIN = 1;
+export const PULSAR_PERIOD_MAX = 10;
+export const PULSAR_PERIOD_STEP = 0.01;
 
-export const pulsarAxisEulerDefault: Triplet = [0, 0, 0];
-export const pulsarAxisEulerMin: Triplet = [-180, -180, -180];
-export const pulsarAxisEulerMax: Triplet = [180, 180, 180];
-export const pulsarAxisEulerStep = 0.1;
-export const pulsarAxisEulerScale = degToRadScale;
-export const pulsarAxisEulerRescale = (arr: Triplet) =>
-	arr.map((x) => rescale(x, pulsarAxisEulerScale)) as Triplet;
+export const PULSAR_AXIS_EULER_DEG_DEFAULT: Triplet = [0, 0, 0];
+export const PULSAR_AXIS_EULER_DEG_MIN: Triplet = [-180, -180, -180];
+export const PULSAR_AXIS_EULER_DEG_MAX: Triplet = [180, 180, 180];
+export const PULSAR_AXIS_EULER_DEG_STEP = 0.1;
+export const pulsarAxisEulerDegToRad = (euler: Triplet) =>
+	euler.map((x) => rescale(x, DEG_TO_RAG_SCALE)) as Triplet;
 
-export const pulsarBeamLatitudeDefault = 0;
-export const pulsarBeamLatitudeMin = 0;
-export const pulsarBeamLatitudeMax = 90;
-export const pulsarBeamLatitudeStep = 0.1;
-export const pulsarBeamLatitudeScale = degToRadScale;
-export const pulsarBeamLatitudeRescale = (x: number) =>
-	rescale(x, pulsarBeamLatitudeScale);
+export const PULSAR_BEAM_LATITUDE_DEG_DEFAULT = 0;
+export const PULSAR_BEAM_LATITUDE_DEG_MIN = 0;
+export const PULSAR_BEAM_LATITUDE_DEG_MAX = 90;
+export const PULSAR_BEAM_LATITUDE_DEG_STEP = 0.1;
+export const pulsarBeamLatitudeDegToRad = (lat: number) =>
+	rescale(lat, DEG_TO_RAG_SCALE);
 
-export const isAnimatingDefault = true;
-export const orbitControlsEnabledDefault = false;
+export const IS_ANIMATING_DEFAULT = true;
+export const ORBIT_CONTROLS_ENABLED_DEFAULT = false;
 
 // Pulsar model constants - geometry, colors, other visual display parameters
-export const pulsarBodyRadius = 5;
-export const pulsarBodyWidthSeg = 64;
-export const pulsarBodyHeightSeg = 32;
-export const pulsarBodyColor = "#3f70bf";
+export const PULSAR_BODY_RADIUS = 5;
+export const PULSAR_BODY_WIDTH_SEG = 64;
+export const PULSAR_BODY_HEIGHT_SEG = 32;
+export const PULSAR_BODY_COLOR = "#3f70bf";
 
-export const pulsarBeamHeight = 20;
-export const pulsarBeamRadSeg = 32;
-export const pulsarBeamHeightSeg = 4;
-export const pulsarBeamColor = "#ffffff";
-export const pulsarBeamTransparency = 0.5;
-export const pulsarBeamsRotationInitial = Math.PI;
+export const PULSAR_BEAM_HEIGHT = 20;
+export const PULSAR_BEAM_RADIUS_SEG = 32;
+export const PULSAR_BEAM_HEIGHT_SEG = 4;
+export const PULSAR_BEAM_COLOR = "#ffffff";
+export const PULSAR_BEAM_TRANS = 0.5;
+export const PULSAR_BEAM_ROTATION_RAD_INIT = Math.PI;
 
-export const pulsarBeamRadiusDefault = 2;
-export const pulsarBeamRadiusMin = 0;
-export const pulsarBeamRadiusMax = pulsarBeamHeight;
-export const pulsarBeamRadiusStep = 0.001;
+export const PULSAR_AXIS_COLOR = "#ffffff";
+export const PULSAR_AXIS_LINE_WIDTH = 2;
 
-export const pulsarAxisColor = "#ffffff";
-export const pulsarAxisLineWidth = 2;
+export const PULSAR_EQUATOR_COLOR = "#ffffff";
+export const PULSAR_EQUATOR_LINE_WIDTH = 2;
 
-export const pulsarEquatorColor = "#ffffff";
-export const pulsarEquatorLineWidth = 2;
-
-export const cameraPositionDefault: Triplet = [
-	1.5 * pulsarBeamHeight,
+export const CAMERA_POSITION_DEF: Triplet = [
+	1.5 * PULSAR_BEAM_HEIGHT,
 	0.0,
 	0.0,
 ];
 
-export const lightDirectionDefault: Triplet = [
-	pulsarBodyRadius * 2,
-	pulsarBodyRadius * 2,
-	-pulsarBodyRadius * 2,
+export const LIGHT_DIRECTION_DEF: Triplet = [
+	PULSAR_BODY_RADIUS * 2,
+	PULSAR_BODY_RADIUS * 2,
+	-PULSAR_BODY_RADIUS * 2,
 ];
+
+// Pulsar beam radius – defined here because the max radius depends on the height
+export const PULSAR_BEAM_RADIUS_DEFAULT = 2;
+export const PULSAR_BEAM_RADIUS_MIN = 0;
+export const PULSAR_BEAM_RADIUS_MAX = PULSAR_BEAM_HEIGHT;
+export const PULSAR_BEAM_RADIUS_STEP = 0.1;
 
 // Create geometry for a pulsar beam
 export function createPulsarBeamGeometry(radius: number): THREE.ConeGeometry {
 	return new THREE.ConeGeometry(
 		radius,
-		pulsarBeamHeight,
-		pulsarBeamRadSeg,
-		pulsarBeamHeightSeg,
+		PULSAR_BEAM_HEIGHT,
+		PULSAR_BEAM_RADIUS_SEG,
+		PULSAR_BEAM_HEIGHT_SEG,
 		true,
-	).translate(0, -pulsarBeamHeight / 2 - pulsarBodyRadius, 0);
+	).translate(0, -PULSAR_BEAM_HEIGHT / 2 - PULSAR_BODY_RADIUS, 0);
 }
 
 // Set rotation for two pulsar beams
 export function setPulsarBeamsRotation(
 	beam1: THREE.Mesh,
 	beam2: THREE.Mesh,
-	latitude: number,
+	latitudeRad: number,
 ): void {
-	beam1.rotation.set(0, pulsarBeamsRotationInitial, Math.PI / 2 + latitude);
-	beam2.rotation.set(0, pulsarBeamsRotationInitial, latitude - Math.PI / 2);
+	beam1.rotation.set(
+		0,
+		PULSAR_BEAM_ROTATION_RAD_INIT,
+		Math.PI / 2 + latitudeRad,
+	);
+	beam2.rotation.set(
+		0,
+		PULSAR_BEAM_ROTATION_RAD_INIT,
+		latitudeRad - Math.PI / 2,
+	);
 }
 
 // Formula to calculate the direction of the pulsar beam given the initial direction, phase, axis inclination, and latitude
 export function getPulsarBeamDirection(
-	pulsarPhase: number,
-	pulsarAxisEuler: Triplet,
-	pulsarBeamLatitude: number,
+	pulsarPhaseRad: number,
+	pulsarAxisEulerRad: Triplet,
+	pulsarBeamLatitudeRad: number,
 	pulsarBeamDirectionXZInitial: [number, number] = [
-		-Math.cos(pulsarBeamsRotationInitial),
-		Math.sin(pulsarBeamsRotationInitial),
+		-Math.cos(PULSAR_BEAM_ROTATION_RAD_INIT),
+		Math.sin(PULSAR_BEAM_ROTATION_RAD_INIT),
 	],
 ): Triplet {
 	const [x, z] = pulsarBeamDirectionXZInitial;
 
 	return new THREE.Vector3(
-		(x * Math.cos(pulsarPhase) + z * Math.sin(pulsarPhase)) *
-			Math.cos(pulsarBeamLatitude),
-		-Math.sin(pulsarBeamLatitude),
-		(-x * Math.sin(pulsarPhase) + z * Math.cos(pulsarPhase)) *
-			Math.cos(pulsarBeamLatitude),
+		(x * Math.cos(pulsarPhaseRad) + z * Math.sin(pulsarPhaseRad)) *
+			Math.cos(pulsarBeamLatitudeRad),
+		-Math.sin(pulsarBeamLatitudeRad),
+		(-x * Math.sin(pulsarPhaseRad) + z * Math.cos(pulsarPhaseRad)) *
+			Math.cos(pulsarBeamLatitudeRad),
 	)
-		.applyEuler(new THREE.Euler(...pulsarAxisEuler))
+		.applyEuler(new THREE.Euler(...pulsarAxisEulerRad))
 		.toArray();
 }
 
@@ -137,15 +143,15 @@ export function getPulsarBeamDirection(
 export function getPulsarBeamIntensity(
 	pulsarBeamDirection: Triplet,
 	cameraDirection: Triplet,
-	pulsarBeamAngle: number,
+	pulsarBeamAngleRad: number,
 ): number {
 	const dotProd = new THREE.Vector3(...pulsarBeamDirection)
 		.normalize()
 		.dot(new THREE.Vector3(...cameraDirection).normalize());
 	const pulsarCameraAngle = Math.acos(dotProd < 0 ? -dotProd : dotProd);
 
-	return pulsarCameraAngle < pulsarBeamAngle
-		? Math.cos(((Math.PI / 2) * pulsarCameraAngle) / pulsarBeamAngle) ** 2
+	return pulsarCameraAngle < pulsarBeamAngleRad
+		? Math.cos(((Math.PI / 2) * pulsarCameraAngle) / pulsarBeamAngleRad) ** 2
 		: 0;
 }
 
@@ -160,5 +166,3 @@ export function getMeshDirection(
 	mesh.getWorldQuaternion(quaternionRotation);
 	return direction.applyQuaternion(quaternionRotation).toArray();
 }
-
-// Rescaling parameters

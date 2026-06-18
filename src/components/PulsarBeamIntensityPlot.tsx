@@ -12,10 +12,10 @@ import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	getPulsarBeamDirection,
 	getPulsarBeamIntensity,
-	pulsarPhaseMax,
-	pulsarPhaseMin,
-	pulsarPhaseRescale,
-	pulsarPhaseX,
+	PULSAR_PHASE_DEF_MAX,
+	PULSAR_PHASE_DEG_MIN,
+	pulsarPhaseDegToRad,
+	PULSAR_PHASE_DEG_XAXIS,
 	type Triplet,
 } from "./utils-pulsar";
 
@@ -59,15 +59,13 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	const [y0, setY0] = useState(Y0);
 	const [y1, setY1] = useState(Y1);
 
-	const gdRef = useRef<Plotly.Root | null>(null);
-
 	// Beam intensity values at each pulsar phase
-	// (Note: the calculation is memoized )
+	// This is memoized so as not to trigger a re-calculation on every prop change
 	const pulsarPhaseY = useMemo(
 		() =>
-			pulsarPhaseX.map((x) => {
+			PULSAR_PHASE_DEG_XAXIS.map((x) => {
 				const dir = getPulsarBeamDirection(
-					pulsarPhaseRescale(x),
+					pulsarPhaseDegToRad(x),
 					pulsarAxisEuler,
 					pulsarBeamLatitude,
 				);
@@ -79,7 +77,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	// Data
 	const data: Partial<Plotly.Data> = useMemo(() => {
 		return {
-			x: pulsarPhaseX,
+			x: PULSAR_PHASE_DEG_XAXIS,
 			y: pulsarPhaseY,
 			type: "scattergl",
 			mode: "lines",
@@ -90,14 +88,48 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		};
 	}, [pulsarPhaseY]);
 
+	// Draggable timeline bar
+	const pulsarPhaseTimeline = useMemo(() => {
+		if (!showPhaseTimeline) return;
+
+		const timeline: Partial<Plotly.Shape> = {
+			type: "line",
+			xref: "x",
+			yref: "paper",
+			x0: pulsarPhase,
+			x1: pulsarPhase,
+			y0: y0,
+			y1: y1,
+			line: {
+				color: "red",
+				dash: "dash",
+				width: 4,
+			},
+		};
+
+		if (showPhaseTimelineLabel) {
+			timeline.label = {
+				text: `Phase: ${pulsarPhase.toFixed(3)}`,
+				font: {
+					size: 20,
+					shadow: "lightgray 1px 1px 1px",
+				},
+				xanchor: "right",
+				yanchor: "middle",
+			};
+		}
+
+		return timeline;
+	}, [pulsarPhase, showPhaseTimeline, showPhaseTimelineLabel, y0, y1]);
+
 	// Layout
 	const layout: Partial<Plotly.Layout> = useMemo(() => {
-		const l: Partial<Plotly.Layout> = {
+		return {
 			xaxis: {
 				title: {
 					text: "Phase",
 				},
-				range: [pulsarPhaseMin - 0.1, pulsarPhaseMax + 0.1],
+				range: [PULSAR_PHASE_DEG_MIN - 0.1, PULSAR_PHASE_DEF_MAX + 0.1],
 				griddash: "dash",
 				gridcolor: "lightgray",
 				zeroline: false,
@@ -115,45 +147,14 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				fixedrange: true,
 				automargin: true,
 			},
+			shapes: pulsarPhaseTimeline !== undefined ? [pulsarPhaseTimeline] : [],
 			margin: { l: 0, r: 0, b: 0, t: 0 },
 			plot_bgcolor: "white",
 			paper_bgcolor: "white",
 			dragmode: false,
 			autosize: true,
 		};
-
-		// Phase timeline bar
-		if (showPhaseTimeline) {
-			const pulsarPhaseTimelineBar: Partial<Plotly.Shape> = {
-				type: "line",
-				xref: "x",
-				yref: "paper",
-				x0: pulsarPhase,
-				x1: pulsarPhase,
-				y0: y0,
-				y1: y1,
-				line: {
-					color: "red",
-					dash: "dash",
-					width: 4,
-				},
-			};
-			if (showPhaseTimelineLabel) {
-				pulsarPhaseTimelineBar.label = {
-					text: `Phase: ${pulsarPhase.toFixed(3)}`,
-					font: {
-						size: 20,
-						shadow: "lightgray 1px 1px 1px",
-					},
-					xanchor: "right",
-					yanchor: "middle",
-				};
-			}
-			l.shapes = [pulsarPhaseTimelineBar];
-		}
-
-		return l;
-	}, [pulsarPhase, showPhaseTimeline, showPhaseTimelineLabel, y0, y1]);
+	}, [pulsarPhaseTimeline]);
 
 	// Config
 	const config = useMemo<Partial<Plotly.Config>>(() => {
@@ -177,8 +178,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				if (x0Update !== null && x0Update !== undefined) {
 					// Prevent timeline from being moved out of frame
 					// TODO: Fix bug where moving timeline when it is at the min or max allows it to be moved out of frame
-					if (x0Update <= pulsarPhaseMin) x0Update = pulsarPhaseMin;
-					if (x0Update >= pulsarPhaseMax) x0Update = pulsarPhaseMax;
+					if (x0Update <= PULSAR_PHASE_DEG_MIN) x0Update = PULSAR_PHASE_DEG_MIN;
+					if (x0Update >= PULSAR_PHASE_DEF_MAX) x0Update = PULSAR_PHASE_DEF_MAX;
 
 					onPulsarPhaseChange?.(x0Update);
 				}
@@ -187,23 +188,12 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		[isAnimating, showPhaseTimeline, onPulsarPhaseChange],
 	);
 
-	useEffect(() => {
-		const gd = gdRef.current;
-		if (!gd) return;
-	}, []);
-
 	return (
 		<Plot
+			className="pulsar-plot"
 			data={[data]}
 			layout={layout}
 			config={config}
-			style={{ width: "100%", height: "100%" }} // Required for auto-resizing to be able to take effect
-			onInitialized={(_figure, gd) => {
-				gdRef.current = gd;
-			}}
-			onPurge={() => {
-				gdRef.current = null;
-			}}
 			onRelayout={handleRelayout}
 			useResizeHandler
 		/>
@@ -233,15 +223,17 @@ export function PulsarBeamIntensityPlotTime(props: {
 	const gdRef = useRef<Plotly.Root>(null); // Div element that the Plot component is rendered inside
 	const xCounterRef = useRef(0); // Counter used to help update plot data
 	const xRangeLenRef = useRef(X_RANGE_LEN_TIME_DEFAULT); // x-axis range length
+	const hasInitializedRef = useRef(false); // Flag that tracks whether the stream has intialized
 
-	// Initial data point, captures the values of the props when the component is first mounted
+	// Initial data point and style
+	// Bit of a hack to capture the values of the props when the component is first mounted and not from any subsequent re-renders
 	const [data] = useState<Partial<Plotly.PlotData>[]>([
 		{
 			x: [0],
 			y: [
 				getPulsarBeamIntensity(
 					getPulsarBeamDirection(
-						pulsarPhaseRescale(pulsarPhase),
+						pulsarPhase,
 						pulsarAxisEuler,
 						pulsarBeamLatitude,
 					),
@@ -300,6 +292,44 @@ export function PulsarBeamIntensityPlotTime(props: {
 		};
 	}, []);
 
+	// Generate a new point on the plot in a form that can be used for Plotly's update and extendTrace methods
+	const generatePointUpdate = useCallback(
+		(x: number): Partial<Plotly.Data> => {
+			if (
+				cameraDirection === undefined ||
+				pulsarAxisEuler === undefined ||
+				pulsarBeamAngle === undefined ||
+				pulsarBeamLatitude === undefined ||
+				pulsarPhase === undefined
+			)
+				return {};
+
+			return {
+				x: [[x]],
+				y: [
+					[
+						getPulsarBeamIntensity(
+							getPulsarBeamDirection(
+								pulsarPhase,
+								pulsarAxisEuler,
+								pulsarBeamLatitude,
+							),
+							cameraDirection,
+							pulsarBeamAngle,
+						),
+					],
+				],
+			};
+		},
+		[
+			cameraDirection,
+			pulsarAxisEuler,
+			pulsarBeamAngle,
+			pulsarBeamLatitude,
+			pulsarPhase,
+		],
+	);
+
 	// Expose parameters and methods through the ref prop
 	useEffect(() => {
 		if (!ref) return;
@@ -310,29 +340,15 @@ export function PulsarBeamIntensityPlotTime(props: {
 				const gd = gdRef.current;
 				if (!gd) return;
 
-				// Reset plot layout refs
+				// Reset refs
 				xCounterRef.current = 0;
 				xRangeLenRef.current = X_RANGE_LEN_TIME_DEFAULT;
+				hasInitializedRef.current = false;
 
 				// Replace the data and layout of the current trace with initial, default values
 				Plotly.update(
 					gd,
-					{
-						x: [[0]],
-						y: [
-							[
-								getPulsarBeamIntensity(
-									getPulsarBeamDirection(
-										pulsarPhaseRescale(pulsarPhase),
-										pulsarAxisEuler,
-										pulsarBeamLatitude,
-									),
-									cameraDirection,
-									pulsarBeamAngle,
-								),
-							],
-						],
-					},
+					generatePointUpdate(0),
 					{
 						"xaxis.range": X_RANGE_TIME_DEFAULT,
 						"xaxis.minallowed": X_MIN_ALLOWED_TIME_DEFAULT,
@@ -343,66 +359,35 @@ export function PulsarBeamIntensityPlotTime(props: {
 				);
 			},
 		};
-	}, [
-		cameraDirection,
-		pulsarAxisEuler,
-		pulsarBeamAngle,
-		pulsarBeamLatitude,
-		pulsarPhase,
-		ref,
-	]);
+	}, [ref, generatePointUpdate]);
 
 	// Stream beam intensity data from prop changes
 	useEffect(() => {
+		// Prevent adding a new point at the very start, to prevent double-plotting of the initial value
+		if (!hasInitializedRef.current) {
+			hasInitializedRef.current = true;
+			return;
+		}
+
 		const gd = gdRef.current;
 		if (!gd) return;
 
-		if (
-			getPulsarBeamDirection !== undefined &&
-			cameraDirection !== undefined &&
-			pulsarBeamAngle !== undefined
-		) {
-			xCounterRef.current += 1; // Increase x-coordinate by one
-			const xUpdate = xCounterRef.current / DISPLAY_FRAME_RATE; // Get updated x-coordinate
-			const xRangeLen = xRangeLenRef.current; // Get the current range length
+		// console.log("tick");
+		xCounterRef.current += 1; // Increase x-coordinate by one
+		const xUpdate = xCounterRef.current / DISPLAY_FRAME_RATE; // Get updated x-coordinate
+		const xRangeLen = xRangeLenRef.current; // Get the current range length
 
-			// Change x range if it exceeds the current range length. This causes the plot to scroll continuously
-			if (xUpdate >= xRangeLen) {
-				Plotly.relayout(gd, {
-					"xaxis.range": [xUpdate - xRangeLen, xUpdate],
-					"xaxis.maxallowed": xUpdate,
-				} as Partial<Plotly.Layout>);
-			}
-
-			// extendTraces is more efficient than React's native state management
-			Plotly.extendTraces(
-				gd,
-				{
-					x: [[xUpdate]],
-					y: [
-						[
-							getPulsarBeamIntensity(
-								getPulsarBeamDirection(
-									pulsarPhaseRescale(pulsarPhase),
-									pulsarAxisEuler,
-									pulsarBeamLatitude,
-								),
-								cameraDirection,
-								pulsarBeamAngle,
-							),
-						],
-					],
-				},
-				[0],
-			);
+		// Change x range if it exceeds the current range length. This causes the plot to scroll continuously
+		if (xUpdate >= xRangeLen) {
+			Plotly.relayout(gd, {
+				"xaxis.range": [xUpdate - xRangeLen, xUpdate],
+				"xaxis.maxallowed": xUpdate,
+			} as Partial<Plotly.Layout>);
 		}
-	}, [
-		pulsarPhase,
-		pulsarAxisEuler,
-		pulsarBeamLatitude,
-		cameraDirection,
-		pulsarBeamAngle,
-	]);
+
+		// extendTraces is more efficient than React's native state management
+		Plotly.extendTraces(gd, generatePointUpdate(xUpdate), [0]);
+	}, [generatePointUpdate]);
 
 	// Toggle plot hovering and zooming/panning based on the animation
 	useEffect(() => {
@@ -424,10 +409,10 @@ export function PulsarBeamIntensityPlotTime(props: {
 
 	return (
 		<Plot
+			className="pulsar-plot"
 			data={data}
 			layout={layout}
 			config={config}
-			style={{ width: "100%", height: "100%" }} // Required for auto-resizing to be able to take effect
 			onInitialized={(_figure, gd) => {
 				gdRef.current = gd as unknown as Plotly.Root; // Get reference to the graph div
 			}}

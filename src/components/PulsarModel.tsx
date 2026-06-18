@@ -7,18 +7,18 @@ import { LineMaterial } from "three/examples/jsm/Addons.js";
 import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	createPulsarBeamGeometry,
-	lightDirectionDefault,
-	pulsarAxisColor,
-	pulsarAxisLineWidth,
-	pulsarBeamColor,
-	pulsarBeamTransparency,
-	pulsarBodyColor,
-	pulsarBodyHeightSeg,
-	pulsarBodyRadius,
-	pulsarBodyWidthSeg,
-	pulsarEquatorColor,
-	pulsarEquatorLineWidth,
-	pulsarPhaseUnrescale,
+	LIGHT_DIRECTION_DEF,
+	PULSAR_AXIS_COLOR,
+	PULSAR_AXIS_LINE_WIDTH,
+	PULSAR_BEAM_COLOR,
+	PULSAR_BEAM_TRANS,
+	PULSAR_BODY_COLOR,
+	PULSAR_BODY_HEIGHT_SEG,
+	PULSAR_BODY_RADIUS,
+	PULSAR_BODY_WIDTH_SEG,
+	PULSAR_EQUATOR_COLOR,
+	PULSAR_EQUATOR_LINE_WIDTH,
+	pulsarPhaseRadToDeg,
 	setPulsarBeamsRotation,
 	type Triplet,
 } from "./utils-pulsar";
@@ -110,7 +110,7 @@ export function PulsarModel(
 
 		const lightDirectional = new THREE.DirectionalLight(0xffffff, 5);
 		lightDirectional.name = "lightDirectional";
-		lightDirectional.position.set(...lightDirectionDefault);
+		lightDirectional.position.set(...LIGHT_DIRECTION_DEF);
 		lightDirectional.target.position.set(0, 0, 0);
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
@@ -126,12 +126,12 @@ export function PulsarModel(
 
 		// Main pulsar body
 		const pulsarBodyGeometry = new THREE.SphereGeometry(
-			pulsarBodyRadius,
-			pulsarBodyWidthSeg,
-			pulsarBodyHeightSeg,
+			PULSAR_BODY_RADIUS,
+			PULSAR_BODY_WIDTH_SEG,
+			PULSAR_BODY_HEIGHT_SEG,
 		);
 		const pulsarBodyMaterial = new THREE.MeshPhongMaterial({
-			color: pulsarBodyColor,
+			color: PULSAR_BODY_COLOR,
 		});
 		const pulsarBody = new THREE.Mesh(pulsarBodyGeometry, pulsarBodyMaterial);
 		pulsarBody.name = "pulsarBody";
@@ -139,15 +139,15 @@ export function PulsarModel(
 
 		// Axis of rotation
 		const pulsarAxisPoints = [
-			new THREE.Vector3(0, pulsarBodyRadius * 2, 0),
-			new THREE.Vector3(0, -pulsarBodyRadius * 2, 0),
+			new THREE.Vector3(0, PULSAR_BODY_RADIUS * 2, 0),
+			new THREE.Vector3(0, -PULSAR_BODY_RADIUS * 2, 0),
 		];
 		const pulsarAxisGeometry = new LineGeometry().setFromPoints(
 			pulsarAxisPoints,
 		);
 		const pulsarAxisMaterial = new LineMaterial({
-			color: pulsarAxisColor,
-			linewidth: pulsarAxisLineWidth,
+			color: PULSAR_AXIS_COLOR,
+			linewidth: PULSAR_AXIS_LINE_WIDTH,
 		});
 		const pulsarAxis = new Line2(pulsarAxisGeometry, pulsarAxisMaterial);
 		pulsarAxis.name = "pulsarAxis";
@@ -157,15 +157,15 @@ export function PulsarModel(
 		const pulsarEquatorPoints = new THREE.ArcCurve(
 			0,
 			0,
-			pulsarBodyRadius,
+			PULSAR_BODY_RADIUS,
 		).getSpacedPoints(64);
 		pulsarEquatorPoints.push(pulsarEquatorPoints[0]);
 		const pulsarEquatorGeometry = new LineGeometry().setFromPoints(
 			pulsarEquatorPoints,
 		);
 		const pulsarEquatorMaterial = new LineMaterial({
-			color: pulsarEquatorColor,
-			linewidth: pulsarEquatorLineWidth,
+			color: PULSAR_EQUATOR_COLOR,
+			linewidth: PULSAR_EQUATOR_LINE_WIDTH,
 		});
 		const pulsarEquator = new Line2(
 			pulsarEquatorGeometry,
@@ -180,10 +180,10 @@ export function PulsarModel(
 			pulsarParams.pulsarBeamRadius,
 		);
 		const pulsarBeamMaterial = new THREE.MeshBasicMaterial({
-			color: pulsarBeamColor,
+			color: PULSAR_BEAM_COLOR,
 			side: THREE.DoubleSide,
-			transparent: pulsarBeamTransparency <= 1.0,
-			opacity: pulsarBeamTransparency,
+			transparent: PULSAR_BEAM_TRANS <= 1.0,
+			opacity: PULSAR_BEAM_TRANS,
 		});
 		const pulsarBeam1 = new THREE.Mesh(pulsarBeamGeometry, pulsarBeamMaterial);
 		const pulsarBeam2 = new THREE.Mesh(pulsarBeamGeometry, pulsarBeamMaterial);
@@ -267,11 +267,13 @@ export function PulsarModel(
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 
 				pulsarParams.onPulsarPhaseChange?.(
-					pulsarPhaseUnrescale(pulsarParams.pulsarPhase),
+					pulsarPhaseRadToDeg(pulsarParams.pulsarPhase),
 				); // Report pulsar phase to parent
 				pulsarParams.onPulsarBeamDirectionChange?.(
 					getMeshDirection(pulsarBeam1, [0, 1, 0]),
 				); // Report pulsar beam direction to parent
+
+				// console.log(`Phase: ${pulsarParams.pulsarPhase}`);
 			}
 
 			orbitControls.update();

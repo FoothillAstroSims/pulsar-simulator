@@ -13,9 +13,13 @@
 	max-width: 50vw;
 }
 
-.pulsar-model {
+.pulsar-model,
+.pulsar-plot,
+.pulsar-sky-view {
 	height: 100%;
 	width: 100%;
+	min-height: 0;
+	min-width: 0;
 }
 
 .pulsar-model.orbit-controls:hover {
@@ -24,11 +28,4 @@
 
 .pulsar-model.orbit-controls:active {
 	cursor: grabbing;
-}
-
-.pulsar-plot {
-	height: 100%;
-	width: 100%;
-	min-height: 0;
-	min-width: 0;
 }
