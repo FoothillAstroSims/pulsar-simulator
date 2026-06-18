@@ -4,9 +4,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	createPulsarBeamGeometry,
+	getMeshDirection,
 	LIGHT_DIRECTION_DEF,
 	PULSAR_AXIS_COLOR,
 	PULSAR_AXIS_LINE_WIDTH,
@@ -22,7 +22,6 @@ import {
 	setPulsarBeamsRotation,
 	type Triplet,
 } from "./utils-pulsar";
-import { getMeshDirection } from "./utils-pulsar";
 
 // Pulsar parameters
 export interface PulsarModelProps {
@@ -91,6 +90,7 @@ export function PulsarModel(
 		let width = mountNode.clientWidth;
 		let height = mountNode.clientHeight;
 		let frameID: number;
+		let lastFrameTime: number | undefined;
 
 		// Pulsar parameters
 		const pulsarParams = pulsarParamsRef.current;
@@ -257,12 +257,18 @@ export function PulsarModel(
 		};
 
 		// Animation
-		const animate = () => {
+		const animate = (time: number) => {
+			// Get change in time from the last animation frame
+			const dt =
+				lastFrameTime === undefined ? 0 : (time - lastFrameTime) / 1000;
+			lastFrameTime = time;
+			console.log(dt);
+
 			if (pulsarParams.isAnimating) {
 				// Rotate pulsar
 				pulsarParams.pulsarPhase =
 					(pulsarParams.pulsarPhase +
-						(2 * Math.PI) / (pulsarParams.pulsarPeriod * DISPLAY_FRAME_RATE)) %
+						(2 * Math.PI * dt) / pulsarParams.pulsarPeriod) %
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 
@@ -283,6 +289,7 @@ export function PulsarModel(
 
 		const startAnimation = () => {
 			if (!frameID) {
+				lastFrameTime = undefined;
 				frameID = window.requestAnimationFrame(animate);
 			}
 			orbitControls.update();

@@ -8,14 +8,13 @@ const createPlotlyComponent =
 const Plot = createPlotlyComponent(Plotly);
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	getPulsarBeamDirection,
 	getPulsarBeamIntensity,
 	PULSAR_PHASE_DEF_MAX,
 	PULSAR_PHASE_DEG_MIN,
-	pulsarPhaseDegToRad,
 	PULSAR_PHASE_DEG_XAXIS,
+	pulsarPhaseDegToRad,
 	type Triplet,
 } from "./utils-pulsar";
 
@@ -24,8 +23,7 @@ const Y0 = -(2 ** 51) + 1.5; // Fixed y-values for the timeline in the phase-bas
 const Y1 = 2 ** 51;
 
 // Time-based plot constants
-const MAX_POINTS = 6 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
-const X_RANGE_LEN_TIME_DEFAULT = MAX_POINTS / DISPLAY_FRAME_RATE; // Default x range length
+const X_RANGE_LEN_TIME_DEFAULT = 6; // Default x range length
 const X_RANGE_TIME_DEFAULT: [number, number] = [-0.1, X_RANGE_LEN_TIME_DEFAULT]; // Default x range
 const Y_RANGE_TIME_DEFAULT: [number, number] = [-0.01, 1.05]; // Default y range
 const X_MIN_ALLOWED_TIME_DEFAULT = 0; // Default x minallowed
@@ -221,9 +219,11 @@ export function PulsarBeamIntensityPlotTime(props: {
 	} = props;
 
 	const gdRef = useRef<Plotly.Root>(null); // Div element that the Plot component is rendered inside
-	const xCounterRef = useRef(0); // Counter used to help update plot data
 	const xRangeLenRef = useRef(X_RANGE_LEN_TIME_DEFAULT); // x-axis range length
-	const hasInitializedRef = useRef(false); // Flag that tracks whether the stream has intialized
+	const lastPhaseRef = useRef<number | null>(null); // Value of the phase in the previous frame. Used to prevent frame-skipping
+	const lastTimeRef = useRef<number | null>(null); // Time of the last plot update. Null = no previous update
+	const totalTimeRef = useRef(0); // Total elapsed time
+	const hasInitializedRef = useRef(false); // Flag for stream initialization
 
 	// Initial data point and style
 	// Bit of a hack to capture the values of the props when the component is first mounted and not from any subsequent re-renders
@@ -340,9 +340,11 @@ export function PulsarBeamIntensityPlotTime(props: {
 				const gd = gdRef.current;
 				if (!gd) return;
 
-				// Reset refs
-				xCounterRef.current = 0;
+				// Reset plot layout and streaming refs
 				xRangeLenRef.current = X_RANGE_LEN_TIME_DEFAULT;
+				lastPhaseRef.current = pulsarPhase;
+				totalTimeRef.current = 0;
+				lastTimeRef.current = null;
 				hasInitializedRef.current = false;
 
 				// Replace the data and layout of the current trace with initial, default values
@@ -359,22 +361,31 @@ export function PulsarBeamIntensityPlotTime(props: {
 				);
 			},
 		};
-	}, [ref, generatePointUpdate]);
+	}, [ref, generatePointUpdate, pulsarPhase]);
 
 	// Stream beam intensity data from prop changes
 	useEffect(() => {
 		// Prevent adding a new point at the very start, to prevent double-plotting of the initial value
 		if (!hasInitializedRef.current) {
 			hasInitializedRef.current = true;
+			lastPhaseRef.current = pulsarPhase; // Initialize the value of the previous phase
 			return;
 		}
 
 		const gd = gdRef.current;
 		if (!gd) return;
 
-		// console.log("tick");
-		xCounterRef.current += 1; // Increase x-coordinate by one
-		const xUpdate = xCounterRef.current / DISPLAY_FRAME_RATE; // Get updated x-coordinate
+		// Avoid updating the plot if the previous phase is the same as the current phase
+		if (Math.abs(pulsarPhase - lastPhaseRef.current!) <= 0.001) return;
+		lastPhaseRef.current = pulsarPhase;
+
+		// Update the time to the next tick
+		const now = performance.now();
+		if (lastTimeRef.current !== null)
+			totalTimeRef.current += (now - lastTimeRef.current) / 1000;
+		lastTimeRef.current = now;
+
+		const xUpdate = totalTimeRef.current; // Get most recent time
 		const xRangeLen = xRangeLenRef.current; // Get the current range length
 
 		// Change x range if it exceeds the current range length. This causes the plot to scroll continuously
@@ -387,7 +398,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 
 		// extendTraces is more efficient than React's native state management
 		Plotly.extendTraces(gd, generatePointUpdate(xUpdate), [0]);
-	}, [generatePointUpdate]);
+	}, [generatePointUpdate, pulsarPhase]);
 
 	// Toggle plot hovering and zooming/panning based on the animation
 	useEffect(() => {
@@ -400,6 +411,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 				"xaxis.fixedrange": true,
 			} as Partial<Plotly.Layout>);
 		} else {
+			lastTimeRef.current = null;
 			Plotly.relayout(gd, {
 				hovermode: "closest",
 				"xaxis.fixedrange": false,

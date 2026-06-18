@@ -1,5 +1,3 @@
-export const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, in Hz
-
 // Get the number of decimal places in a number
 export function getDecimalPlaces(num: number) {
 	return Math.floor(num) === num ? 0 : num.toString().split(".")[1].length || 0;
