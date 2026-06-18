@@ -10,7 +10,8 @@ export function unrescale(x: number, scale: number = 1, offset: number = 0) {
 	return scale * (x - offset);
 }
 
-const DEG_TO_RAG_SCALE = 180 / Math.PI;
+export const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, in Hz
+const DEG_TO_RAG_SCALE = 180 / Math.PI; // Degrees to radians conversion rate
 
 // Default values, ranges, and step sizes for each parameter
 export const PULSAR_PHASE_DEG_DEFAULT = 0.0;
