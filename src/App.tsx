@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
@@ -12,33 +12,29 @@ import {
 	isAnimatingDefault,
 	orbitControlsEnabledDefault,
 	pulsarAxisEulerDefault,
-	pulsarAxisEulerMaxRescaled,
-	pulsarAxisEulerMinRescaled,
+	pulsarAxisEulerMax,
+	pulsarAxisEulerMin,
 	pulsarAxisEulerRescale,
 	pulsarAxisEulerStep,
-	pulsarAxisEulerUnrescale,
-	pulsarBeamAngleDefault,
-	pulsarBeamAngleMaxRescaled,
-	pulsarBeamAngleMinRescaled,
-	pulsarBeamAngleRescale,
-	pulsarBeamAngleStep,
-	pulsarBeamAngleUnrescale,
+	pulsarBeamHeight,
 	pulsarBeamLatitudeDefault,
-	pulsarBeamLatitudeMaxRescaled,
-	pulsarBeamLatitudeMinRescaled,
+	pulsarBeamLatitudeMax,
+	pulsarBeamLatitudeMin,
 	pulsarBeamLatitudeRescale,
 	pulsarBeamLatitudeStep,
-	pulsarBeamLatitudeUnrescale,
+	pulsarBeamRadiusDefault,
+	pulsarBeamRadiusMax,
+	pulsarBeamRadiusMin,
+	pulsarBeamRadiusStep,
 	pulsarPeriodDefault,
 	pulsarPeriodMax,
 	pulsarPeriodMin,
 	pulsarPeriodStep,
 	pulsarPhaseDefault,
-	pulsarPhaseMaxRescaled,
-	pulsarPhaseMinRescaled,
+	pulsarPhaseMax,
+	pulsarPhaseMin,
+	pulsarPhaseRescale,
 	pulsarPhaseStep,
-	pulsarPhaseXRescale,
-	pulsarPhaseXUnrescale,
 	type Triplet,
 } from "./components/utils-pulsar";
 import { createKeyDownEventHandler } from "./utils";
@@ -52,8 +48,8 @@ export default function App() {
 	const [pulsarAxisEuler, setPulsarAxisEuler] = useState<Triplet>(
 		pulsarAxisEulerDefault,
 	);
-	const [pulsarBeamAngle, setPulsarBeamAngle] = useState(
-		pulsarBeamAngleDefault,
+	const [pulsarBeamRadius, setPulsarBeamRadius] = useState(
+		pulsarBeamRadiusDefault,
 	);
 	const [cameraPosition, setCameraPosition] = useState(cameraPositionDefault);
 	const [isAnimating, setIsAnimating] = useState(isAnimatingDefault);
@@ -62,6 +58,23 @@ export default function App() {
 	);
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
 	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
+
+	const pulsarPhaseRescaled = useMemo(
+		() => pulsarPhaseRescale(pulsarPhase),
+		[pulsarPhase],
+	);
+	const pulsarBeamLatitudeRescaled = useMemo(
+		() => pulsarBeamLatitudeRescale(pulsarBeamLatitude),
+		[pulsarBeamLatitude],
+	);
+	const pulsarAxisEulerRescaled = useMemo(
+		() => pulsarAxisEulerRescale(pulsarAxisEuler),
+		[pulsarAxisEuler],
+	);
+	const pulsarBeamAngle = useMemo(
+		() => Math.atan(pulsarBeamRadius / pulsarBeamHeight),
+		[pulsarBeamRadius],
+	);
 
 	const pulsarModelRef = useRef<Record<string, unknown> | null>(null);
 	const pulsarPlotTimeRef = useRef<Record<string, unknown> | null>(null);
@@ -72,7 +85,7 @@ export default function App() {
 			setPulsarPeriod(pulsarPeriodDefault);
 			setPulsarAxisEuler(pulsarAxisEulerDefault);
 			setPulsarBeamLatitude(pulsarBeamLatitudeDefault);
-			setPulsarBeamAngle(pulsarBeamAngleDefault);
+			setPulsarBeamRadius(pulsarBeamRadiusDefault);
 			// console.log("Pulsar parameters reset");
 		}
 	}, [isAnimating]);
@@ -150,14 +163,13 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarPhase"
 					label="Phase"
-					min={pulsarPhaseMinRescaled}
-					max={pulsarPhaseMaxRescaled}
+					min={pulsarPhaseMin}
+					max={pulsarPhaseMax}
 					step={pulsarPhaseStep}
-					value={pulsarPhaseXRescale(pulsarPhase)}
+					value={pulsarPhase}
 					disabled={isAnimating}
 					onChange={(e) => {
-						if (e.target.value)
-							setPulsarPhase(pulsarPhaseXUnrescale(parseFloat(e.target.value)));
+						if (e.target.value) setPulsarPhase(parseFloat(e.target.value));
 						// if (!isAnimating) console.log(`Pulsar phase: ${e.target.value}`);
 					}}
 				/>{" "}
@@ -209,16 +221,16 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarInclinationAngle"
 					label="Inclination angle"
-					min={pulsarAxisEulerMinRescaled[2]}
-					max={pulsarAxisEulerMaxRescaled[2]}
+					min={pulsarAxisEulerMin[2]}
+					max={pulsarAxisEulerMax[2]}
 					step={pulsarAxisEulerStep}
-					value={pulsarAxisEulerRescale(pulsarAxisEuler[2])}
+					value={pulsarAxisEuler[2]}
 					onChange={(e) => {
 						if (e.target.value)
 							setPulsarAxisEuler([
 								pulsarAxisEuler[0],
 								pulsarAxisEuler[1],
-								pulsarAxisEulerUnrescale(parseFloat(e.target.value)),
+								parseFloat(e.target.value),
 							]);
 						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
@@ -226,30 +238,25 @@ export default function App() {
 				<PulsarParameterInput
 					name="pulsarBeamLatitude"
 					label="Beam latitude"
-					min={pulsarBeamLatitudeMinRescaled}
-					max={pulsarBeamLatitudeMaxRescaled}
+					min={pulsarBeamLatitudeMin}
+					max={pulsarBeamLatitudeMax}
 					step={pulsarBeamLatitudeStep}
-					value={pulsarBeamLatitudeRescale(pulsarBeamLatitude)}
+					value={pulsarBeamLatitude}
 					onChange={(e) => {
 						if (e.target.value)
-							setPulsarBeamLatitude(
-								pulsarBeamLatitudeUnrescale(parseFloat(e.target.value)),
-							);
+							setPulsarBeamLatitude(parseFloat(e.target.value));
 						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
 				/>{" "}
 				<PulsarParameterInput
-					name="pulsarBeamAngle"
+					name="pulsarBeamRadius"
 					label="Beam angle"
-					min={pulsarBeamAngleMinRescaled}
-					max={pulsarBeamAngleMaxRescaled}
-					step={pulsarBeamAngleStep}
-					value={pulsarBeamAngleRescale(pulsarBeamAngle)}
+					min={pulsarBeamRadiusMin}
+					max={pulsarBeamRadiusMax}
+					step={pulsarBeamRadiusStep}
+					value={pulsarBeamRadius}
 					onChange={(e) => {
-						if (e.target.value)
-							setPulsarBeamAngle(
-								pulsarBeamAngleUnrescale(parseFloat(e.target.value)),
-							);
+						if (e.target.value) setPulsarBeamRadius(parseFloat(e.target.value));
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
@@ -268,11 +275,11 @@ export default function App() {
 				<div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
 					<PulsarModel
 						ref={pulsarModelRef}
-						pulsarPhase={pulsarPhase}
+						pulsarPhase={pulsarPhaseRescaled}
 						pulsarPeriod={pulsarPeriod}
-						pulsarAxisEuler={pulsarAxisEuler}
-						pulsarBeamLatitude={pulsarBeamLatitude}
-						pulsarBeamAngle={pulsarBeamAngle}
+						pulsarAxisEuler={pulsarAxisEulerRescaled}
+						pulsarBeamLatitude={pulsarBeamLatitudeRescaled}
+						pulsarBeamRadius={pulsarBeamRadius}
 						cameraPosition={cameraPosition}
 						isAnimating={isAnimating}
 						orbitControlsEnabled={orbitControlsEnabled}
@@ -294,8 +301,8 @@ export default function App() {
 					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotPhase
 							pulsarPhase={pulsarPhase}
-							pulsarAxisEuler={pulsarAxisEuler}
-							pulsarBeamLatitude={pulsarBeamLatitude}
+							pulsarAxisEuler={pulsarAxisEulerRescaled}
+							pulsarBeamLatitude={pulsarBeamLatitudeRescaled}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
 							isAnimating={isAnimating}
@@ -327,8 +334,8 @@ export default function App() {
 						<PulsarBeamIntensityPlotTime
 							ref={pulsarPlotTimeRef}
 							pulsarPhase={pulsarPhase}
-							pulsarAxisEuler={pulsarAxisEuler}
-							pulsarBeamLatitude={pulsarBeamLatitude}
+							pulsarAxisEuler={pulsarAxisEulerRescaled}
+							pulsarBeamLatitude={pulsarBeamLatitudeRescaled}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
 							isAnimating={isAnimating}
@@ -346,9 +353,9 @@ export default function App() {
 					</div>
 					<div style={{ flex: 4, minWidth: 0, minHeight: 0, padding: "5px" }}>
 						<PulsarSkyView
-							pulsarPhase={pulsarPhase}
-							pulsarAxisEuler={pulsarAxisEuler}
-							pulsarBeamLatitude={pulsarBeamLatitude}
+							pulsarPhase={pulsarPhaseRescaled}
+							pulsarAxisEuler={pulsarAxisEulerRescaled}
+							pulsarBeamLatitude={pulsarBeamLatitudeRescaled}
 							cameraDirection={cameraPosition}
 							pulsarBeamAngle={pulsarBeamAngle}
 						/>

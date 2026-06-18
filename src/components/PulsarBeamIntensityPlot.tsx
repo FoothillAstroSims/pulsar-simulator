@@ -14,11 +14,8 @@ import {
 	getPulsarBeamIntensity,
 	pulsarPhaseMax,
 	pulsarPhaseMin,
-	pulsarPhaseXRescale,
-	pulsarPhaseXUnrescale,
+	pulsarPhaseRescale,
 	pulsarPhaseX,
-	pulsarPhaseXScale,
-	unrescale,
 	type Triplet,
 } from "./utils-pulsar";
 
@@ -65,26 +62,33 @@ export function PulsarBeamIntensityPlotPhase(props: {
 	const gdRef = useRef<Plotly.Root | null>(null);
 
 	// Beam intensity values at each pulsar phase
-	const pulsarPhaseY = pulsarPhaseX.map((x) => {
-		const dir = getPulsarBeamDirection(
-			unrescale(x, pulsarPhaseXScale),
-			pulsarAxisEuler,
-			pulsarBeamLatitude,
-		);
-		return getPulsarBeamIntensity(dir, cameraDirection, pulsarBeamAngle);
-	});
+	// (Note: the calculation is memoized )
+	const pulsarPhaseY = useMemo(
+		() =>
+			pulsarPhaseX.map((x) => {
+				const dir = getPulsarBeamDirection(
+					pulsarPhaseRescale(x),
+					pulsarAxisEuler,
+					pulsarBeamLatitude,
+				);
+				return getPulsarBeamIntensity(dir, cameraDirection, pulsarBeamAngle);
+			}),
+		[pulsarAxisEuler, pulsarBeamLatitude, cameraDirection, pulsarBeamAngle],
+	);
 
 	// Data
-	const data: Partial<Plotly.Data> = {
-		x: pulsarPhaseX,
-		y: pulsarPhaseY,
-		type: "scattergl",
-		mode: "lines",
-		line: {
-			shape: "spline",
-			width: 4,
-		},
-	};
+	const data: Partial<Plotly.Data> = useMemo(() => {
+		return {
+			x: pulsarPhaseX,
+			y: pulsarPhaseY,
+			type: "scattergl",
+			mode: "lines",
+			line: {
+				shape: "spline",
+				width: 4,
+			},
+		};
+	}, [pulsarPhaseY]);
 
 	// Layout
 	const layout: Partial<Plotly.Layout> = useMemo(() => {
@@ -93,10 +97,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				title: {
 					text: "Phase",
 				},
-				range: [
-					pulsarPhaseXRescale(-0.01),
-					pulsarPhaseXRescale(2 * Math.PI + 0.01),
-				],
+				range: [pulsarPhaseMin - 0.1, pulsarPhaseMax + 0.1],
 				griddash: "dash",
 				gridcolor: "lightgray",
 				zeroline: false,
@@ -127,8 +128,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 				type: "line",
 				xref: "x",
 				yref: "paper",
-				x0: pulsarPhaseXRescale(pulsarPhase),
-				x1: pulsarPhaseXRescale(pulsarPhase),
+				x0: pulsarPhase,
+				x1: pulsarPhase,
 				y0: y0,
 				y1: y1,
 				line: {
@@ -139,7 +140,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			};
 			if (showPhaseTimelineLabel) {
 				pulsarPhaseTimelineBar.label = {
-					text: `Phase: ${pulsarPhaseXRescale(pulsarPhase).toFixed(3)}`,
+					text: `Phase: ${pulsarPhase.toFixed(3)}`,
 					font: {
 						size: 20,
 						shadow: "lightgray 1px 1px 1px",
@@ -179,7 +180,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 					if (x0Update <= pulsarPhaseMin) x0Update = pulsarPhaseMin;
 					if (x0Update >= pulsarPhaseMax) x0Update = pulsarPhaseMax;
 
-					onPulsarPhaseChange?.(pulsarPhaseXUnrescale(x0Update));
+					onPulsarPhaseChange?.(x0Update);
 				}
 			}
 		},
@@ -240,7 +241,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 			y: [
 				getPulsarBeamIntensity(
 					getPulsarBeamDirection(
-						pulsarPhase,
+						pulsarPhaseRescale(pulsarPhase),
 						pulsarAxisEuler,
 						pulsarBeamLatitude,
 					),
@@ -322,7 +323,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 							[
 								getPulsarBeamIntensity(
 									getPulsarBeamDirection(
-										pulsarPhase,
+										pulsarPhaseRescale(pulsarPhase),
 										pulsarAxisEuler,
 										pulsarBeamLatitude,
 									),
@@ -362,7 +363,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 			pulsarBeamAngle !== undefined
 		) {
 			xCounterRef.current += 1; // Increase x-coordinate by one
-			const xUpdate = xCounterRef.current / 60.0; // Get updated x-coordinate
+			const xUpdate = xCounterRef.current / DISPLAY_FRAME_RATE; // Get updated x-coordinate
 			const xRangeLen = xRangeLenRef.current; // Get the current range length
 
 			// Change x range if it exceeds the current range length. This causes the plot to scroll continuously
@@ -382,7 +383,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 						[
 							getPulsarBeamIntensity(
 								getPulsarBeamDirection(
-									pulsarPhase,
+									pulsarPhaseRescale(pulsarPhase),
 									pulsarAxisEuler,
 									pulsarBeamLatitude,
 								),

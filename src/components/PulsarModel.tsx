@@ -11,7 +11,6 @@ import {
 	pulsarAxisColor,
 	pulsarAxisLineWidth,
 	pulsarBeamColor,
-	pulsarBeamHeight,
 	pulsarBeamTransparency,
 	pulsarBodyColor,
 	pulsarBodyHeightSeg,
@@ -19,6 +18,7 @@ import {
 	pulsarBodyWidthSeg,
 	pulsarEquatorColor,
 	pulsarEquatorLineWidth,
+	pulsarPhaseUnrescale,
 	setPulsarBeamsRotation,
 	type Triplet,
 } from "./utils-pulsar";
@@ -30,7 +30,7 @@ export interface PulsarModelProps {
 	pulsarPeriod: number; // Number of seconds for the pulsar to make one revolution around its axis
 	pulsarAxisEuler: Triplet; // Euler angles representing the rotation of the pulsar axis
 	pulsarBeamLatitude: number; // Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator
-	pulsarBeamAngle: number; // Half-angle of the pulsar beams i.e. the angle between the altitude and the slant of the cone representing the beam
+	pulsarBeamRadius: number; // Radius of the pulsar beams
 	cameraPosition: Triplet; // Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin
 	isAnimating: boolean; // Animation toggle
 	orbitControlsEnabled: boolean; // Orbit controls toggle
@@ -50,7 +50,7 @@ export function PulsarModel(
 		pulsarPeriod,
 		pulsarAxisEuler,
 		pulsarBeamLatitude,
-		pulsarBeamAngle,
+		pulsarBeamRadius,
 		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
@@ -73,7 +73,7 @@ export function PulsarModel(
 		pulsarPeriod: pulsarPeriod,
 		pulsarAxisEuler: pulsarAxisEuler,
 		pulsarBeamLatitude: pulsarBeamLatitude,
-		pulsarBeamAngle: pulsarBeamAngle,
+		pulsarBeamRadius: pulsarBeamRadius,
 		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
@@ -176,9 +176,9 @@ export function PulsarModel(
 		pulsar.add(pulsarEquator);
 
 		// Beams
-		const pulsarBeamRadius =
-			pulsarBeamHeight * Math.tan(pulsarParams.pulsarBeamAngle);
-		const pulsarBeamGeometry = createPulsarBeamGeometry(pulsarBeamRadius);
+		const pulsarBeamGeometry = createPulsarBeamGeometry(
+			pulsarParams.pulsarBeamRadius,
+		);
 		const pulsarBeamMaterial = new THREE.MeshBasicMaterial({
 			color: pulsarBeamColor,
 			side: THREE.DoubleSide,
@@ -266,7 +266,9 @@ export function PulsarModel(
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 
-				pulsarParams.onPulsarPhaseChange?.(pulsarParams.pulsarPhase); // Report pulsar phase to parent
+				pulsarParams.onPulsarPhaseChange?.(
+					pulsarPhaseUnrescale(pulsarParams.pulsarPhase),
+				); // Report pulsar phase to parent
 				pulsarParams.onPulsarBeamDirectionChange?.(
 					getMeshDirection(pulsarBeam1, [0, 1, 0]),
 				); // Report pulsar beam direction to parent
@@ -427,16 +429,15 @@ export function PulsarModel(
 		}
 	}, [pulsarAxisEuler]);
 
-	// Change pulsar beam angle
+	// Change pulsar beam radius
 	useEffect(() => {
-		if (pulsarBeamAngle !== undefined) {
-			pulsarParamsRef.current.pulsarBeamAngle = pulsarBeamAngle;
+		if (pulsarBeamRadius !== undefined) {
+			pulsarParamsRef.current.pulsarBeamRadius = pulsarBeamRadius;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
 			if (scene && camera && renderer) {
 				// Mesh geometries cannot be changed after they are created, so we must recreate the geometry wholesale
-				const pulsarBeamRadius = pulsarBeamHeight * Math.tan(pulsarBeamAngle);
 				const pulsarBeams = scene.getObjectByName("pulsarBeams")
 					?.children as THREE.Mesh<THREE.ConeGeometry>[];
 				pulsarBeams.forEach((pulsarBeam) => {
@@ -447,7 +448,7 @@ export function PulsarModel(
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarBeamAngle]);
+	}, [pulsarBeamRadius]);
 
 	// // Display debug info about the model
 	// useEffect(() => {
