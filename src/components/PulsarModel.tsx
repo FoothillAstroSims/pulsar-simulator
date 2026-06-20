@@ -4,7 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { DISPLAY_FRAME_RATE } from "./utils-pulsar";
+import { DISPLAY_FRAME_RATE } from "../utils";
 import {
 	createPulsarBeamGeometry,
 	LIGHT_DIRECTION_DEF,
