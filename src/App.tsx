@@ -8,7 +8,7 @@ import { PulsarModel } from "./components/PulsarModel";
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
 import { PulsarSkyView } from "./components/PulsarSkyView";
 import {
-	CAMERA_POSITION_DEF,
+	CAMERA_POSITION_DEFAULT,
 	IS_ANIMATING_DEFAULT,
 	ORBIT_CONTROLS_ENABLED_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_DEFAULT,
@@ -36,11 +36,13 @@ import {
 	pulsarPhaseDegToRad,
 	PULSAR_PHASE_DEG_STEP,
 	type Triplet,
-} from "./components/utils-pulsar";
+} from "./components/pulsar-config";
 import { createKeyDownEventHandler } from "./utils";
 
 export default function App() {
-	const [pulsarPhaseDeg, setPulsarPhaseDeg] = useState(PULSAR_PHASE_DEG_DEFAULT);
+	const [pulsarPhaseDeg, setPulsarPhaseDeg] = useState(
+		PULSAR_PHASE_DEG_DEFAULT,
+	);
 	const [pulsarPeriod, setPulsarPeriod] = useState(PULSAR_PERIOD_DEFAULT);
 	const [pulsarBeamLatitudeDeg, setPulsarBeamLatitudeDeg] = useState(
 		PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
@@ -51,7 +53,7 @@ export default function App() {
 	const [pulsarBeamRadius, setPulsarBeamRadius] = useState(
 		PULSAR_BEAM_RADIUS_DEFAULT,
 	);
-	const [cameraPosition, setCameraPosition] = useState(CAMERA_POSITION_DEF);
+	const [cameraPosition, setCameraPosition] = useState(CAMERA_POSITION_DEFAULT);
 	const [isAnimating, setIsAnimating] = useState(IS_ANIMATING_DEFAULT);
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		ORBIT_CONTROLS_ENABLED_DEFAULT,

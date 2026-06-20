@@ -1,14 +1,3 @@
-// Get the number of decimal places in a number
-export function getDecimalPlaces(num: number) {
-	return Math.floor(num) === num ? 0 : num.toString().split(".")[1].length || 0;
-}
-
-// Generate a range of values
-export function range(start: number, stop: number, step: number): number[] {
-	const len = Math.floor((stop - start) / step);
-	return Array.from({ length: len }, (_, i) => start + i * step);
-}
-
 // Create an event handler that runs a callback whenever certain individual keys are pressed
 export function createKeyDownEventHandler(
 	keys: string[],

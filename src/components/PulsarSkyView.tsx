@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-	getPulsarBeamDirection,
-	getPulsarBeamIntensity,
-	type Triplet,
-} from "./utils-pulsar";
+import { type Triplet } from "./pulsar-config";
+import { getPulsarBeamDirection, getPulsarBeamIntensity } from "./pulsar-utils";
 
 const pulseColorRGB = "255, 255, 0"; // Pulse color RGB
 const skyColorRGB = "135, 206, 235"; // Sky color RGB

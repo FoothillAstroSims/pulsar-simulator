@@ -9,14 +9,13 @@ const Plot = createPlotlyComponent(Plotly);
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-	getPulsarBeamDirection,
-	getPulsarBeamIntensity,
 	PULSAR_PHASE_DEF_MAX,
 	PULSAR_PHASE_DEG_MIN,
 	PULSAR_PHASE_DEG_XAXIS,
 	pulsarPhaseDegToRad,
 	type Triplet,
-} from "./utils-pulsar";
+} from "./pulsar-config";
+import { getPulsarBeamDirection, getPulsarBeamIntensity } from "./pulsar-utils";
 
 // Phase-based plot constants
 const Y0 = -(2 ** 51) + 1.5; // Fixed y-values for the timeline in the phase-based plot
@@ -77,7 +76,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		return {
 			x: PULSAR_PHASE_DEG_XAXIS,
 			y: pulsarPhaseY,
-			type: "scattergl",
+			// type: "scattergl",
+			type: "scatter",
 			mode: "lines",
 			line: {
 				shape: "spline",
@@ -241,7 +241,8 @@ export function PulsarBeamIntensityPlotTime(props: {
 					pulsarBeamAngle,
 				),
 			],
-			type: "scattergl",
+			// type: "scattergl",
+			type: "scatter",
 			mode: "lines",
 			line: {
 				shape: "spline",
@@ -372,12 +373,12 @@ export function PulsarBeamIntensityPlotTime(props: {
 			return;
 		}
 
-		const gd = gdRef.current;
-		if (!gd) return;
-
 		// Avoid updating the plot if the previous phase is the same as the current phase
 		if (Math.abs(pulsarPhase - lastPhaseRef.current!) <= 0.001) return;
 		lastPhaseRef.current = pulsarPhase;
+
+		const gd = gdRef.current;
+		if (!gd) return;
 
 		// Update the time to the next tick
 		const now = performance.now();

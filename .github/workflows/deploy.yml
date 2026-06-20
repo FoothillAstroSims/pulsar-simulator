@@ -43,6 +43,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
+        env:
+          VITE_BRANCH_NAME: ${{github.head_ref || github.ref_name}}
         run: pnpm run build
       - name: Setup Pages
         uses: actions/configure-pages@v6

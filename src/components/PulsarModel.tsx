@@ -5,9 +5,7 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
 import {
-	createPulsarBeamGeometry,
-	getMeshDirection,
-	LIGHT_DIRECTION_DEF,
+	LIGHT_DIRECTION_DEFAULT,
 	PULSAR_AXIS_COLOR,
 	PULSAR_AXIS_LINE_WIDTH,
 	PULSAR_BEAM_COLOR,
@@ -19,9 +17,13 @@ import {
 	PULSAR_EQUATOR_COLOR,
 	PULSAR_EQUATOR_LINE_WIDTH,
 	pulsarPhaseRadToDeg,
-	setPulsarBeamsRotation,
 	type Triplet,
-} from "./utils-pulsar";
+} from "./pulsar-config";
+import {
+	createPulsarBeamGeometry,
+	getMeshDirection,
+	setPulsarBeamsRotation,
+} from "./pulsar-utils";
 
 // Pulsar parameters
 export interface PulsarModelProps {
@@ -110,7 +112,7 @@ export function PulsarModel(
 
 		const lightDirectional = new THREE.DirectionalLight(0xffffff, 5);
 		lightDirectional.name = "lightDirectional";
-		lightDirectional.position.set(...LIGHT_DIRECTION_DEF);
+		lightDirectional.position.set(...LIGHT_DIRECTION_DEFAULT);
 		lightDirectional.target.position.set(0, 0, 0);
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
@@ -262,7 +264,6 @@ export function PulsarModel(
 			const dt =
 				lastFrameTime === undefined ? 0 : (time - lastFrameTime) / 1000;
 			lastFrameTime = time;
-			console.log(dt);
 
 			if (pulsarParams.isAnimating) {
 				// Rotate pulsar
