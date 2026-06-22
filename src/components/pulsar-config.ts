@@ -1,16 +1,20 @@
+/* 
+Configurable values and derived methods for use in the pulsar simulation
+*/
 import { range } from "./pulsar-utils";
 
 export type Triplet = [number, number, number];
 
-export function rescale(x: number, scale: number = 1, offset: number = 0) {
+// Scaling helper functions
+function rescale(x: number, scale: number = 1, offset: number = 0) {
 	return x / scale + offset;
 }
-export function unrescale(x: number, scale: number = 1, offset: number = 0) {
+function unrescale(x: number, scale: number = 1, offset: number = 0) {
 	return scale * (x - offset);
 }
 
-export const DISPLAY_FRAME_RATE = 60.0; // Display frame rate, in Hz
-const DEG_TO_RAG_SCALE = 180 / Math.PI;
+export const SHOW_DEBUG = true; // Show debug messages
+const DEG_TO_RAG_SCALE = 180 / Math.PI; // Degrees to radians conversion ratio
 
 // Default values, ranges, and step sizes for each parameter
 export const PULSAR_PHASE_DEG_DEFAULT = 0.0;
@@ -86,3 +90,17 @@ export const PULSAR_BEAM_RADIUS_DEFAULT = 2;
 export const PULSAR_BEAM_RADIUS_MIN = 0;
 export const PULSAR_BEAM_RADIUS_MAX = PULSAR_BEAM_HEIGHT;
 export const PULSAR_BEAM_RADIUS_STEP = 0.1;
+
+// Phase-based beam intensity plot constants
+export const Y0 = -(2 ** 51); // Fixed y-values for the timeline in the phase-based plot
+export const Y1 = 2 ** 51 + 1.5;
+
+// Time-based beam intensity plot constants
+export const X_RANGE_LEN_TIME_DEFAULT = 6; // Default x range length i.e. number of seconds to show at once
+export const X_RANGE_TIME_INITIAL: [number, number] = [
+	-0.1,
+	X_RANGE_LEN_TIME_DEFAULT,
+]; // Initial x range
+export const Y_RANGE_TIME_DEFAULT: [number, number] = [-0.01, 1.05]; // Default y range
+export const X_MIN_ALLOWED_TIME_DEFAULT = 0; // Default x minallowed
+export const X_MAX_ALLOWED_TIME_DEFAULT = X_RANGE_LEN_TIME_DEFAULT; // Default x maxallowed

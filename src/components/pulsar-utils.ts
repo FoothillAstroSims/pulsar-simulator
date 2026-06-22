@@ -1,3 +1,7 @@
+/* 
+Utility functions for use in the pulsar simulation
+*/
+
 import * as THREE from "three";
 import {
 	PULSAR_BEAM_HEIGHT,
@@ -7,6 +11,12 @@ import {
 	PULSAR_BEAM_ROTATION_RAD_INIT,
 	type Triplet,
 } from "./pulsar-config";
+
+// Generate a range of values
+export function range(start: number, stop: number, step: number): number[] {
+	const len = Math.floor((stop - start) / step);
+	return Array.from({ length: len }, (_, i) => start + i * step);
+}
 
 // Create geometry for a pulsar beam
 export function createPulsarBeamGeometry(radius: number): THREE.ConeGeometry {
@@ -86,8 +96,4 @@ export function getMeshDirection(
 
 	mesh.getWorldQuaternion(quaternionRotation);
 	return direction.applyQuaternion(quaternionRotation).toArray();
-} // Generate a range of values
-export function range(start: number, stop: number, step: number): number[] {
-	const len = Math.floor((stop - start) / step);
-	return Array.from({ length: len }, (_, i) => start + i * step);
 }

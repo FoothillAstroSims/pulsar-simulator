@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { PulsarModel, PulsarModelProps } from "../src/components/PulsarModel";
+import { PulsarModel } from "../src/components/PulsarModel";
 import {
 	CAMERA_POSITION_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_DEFAULT,
@@ -13,7 +13,7 @@ import {
 	pulsarPhaseDegToRad,
 } from "../src/components/pulsar-config";
 
-const pulsarModelProps: PulsarModelProps = {
+const pulsarModelProps = {
 	pulsarPhase: pulsarPhaseDegToRad(PULSAR_PHASE_DEG_DEFAULT),
 	pulsarPeriod: PULSAR_PERIOD_DEFAULT,
 	pulsarAxisEuler: pulsarAxisEulerDegToRad(PULSAR_AXIS_EULER_DEG_DEFAULT),

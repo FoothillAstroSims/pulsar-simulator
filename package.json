@@ -12,12 +12,12 @@
     "test:browser": "vitest --config=vitest.browser.config.ts"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
+    "bootstrap": "^5.3.8",
     "plotly.js": "^3.6.0",
     "plotly.js-dist-min": "^3.6.0",
     "pnpm": "^11.7.0",
     "react": "^19.2.7",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.7",
     "react-plotly.js": "^2.6.0",
     "three": "^0.184.0"
