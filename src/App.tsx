@@ -60,6 +60,8 @@ export default function App() {
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		ORBIT_CONTROLS_ENABLED_DEFAULT,
 	);
+	const [showPulsarEquator, setShowPulsarEquator] = useState(true);
+	const [showPulsarAxis, setShowPulsarAxis] = useState(true);
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
 	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
 
@@ -263,6 +265,24 @@ export default function App() {
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
+				<div style={{ display: "flex" }}>
+					<label style={{ flex: 1 }}>
+						<input
+							type="checkbox"
+							checked={showPulsarEquator}
+							onChange={() => setShowPulsarEquator((prev) => !prev)}
+						/>
+						Show equator
+					</label>
+					<label style={{ flex: 1 }}>
+						<input
+							type="checkbox"
+							checked={showPulsarAxis}
+							onChange={() => setShowPulsarAxis((prev) => !prev)}
+						/>
+						Show axis of rotation
+					</label>
+				</div>
 			</div>
 
 			<div
@@ -286,9 +306,11 @@ export default function App() {
 						cameraPosition={cameraPosition}
 						isAnimating={isAnimating}
 						orbitControlsEnabled={orbitControlsEnabled}
+						showPulsarEquator={showPulsarEquator}
+						showPulsarAxis={showPulsarAxis}
 						onPulsarPhaseChange={setPulsarPhaseDeg}
 						onCameraPositionChange={setCameraPosition}
-						showAxes={true}
+						// showAxesHelper={true}
 					/>
 				</div>
 				<div

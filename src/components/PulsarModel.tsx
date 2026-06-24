@@ -53,7 +53,9 @@ export function PulsarModel(
 	props: PulsarModelProps & {
 		ref?: React.RefObject<Record<string, unknown> | null>; // Reference to the node containing the model
 		orbitControlsEnabled?: boolean; // Orbit controls toggle
-		showAxes?: boolean; // Axes toggle
+		showAxesHelper?: boolean; // Axes toggle
+		showPulsarEquator?: boolean;
+		showPulsarAxis?: boolean;
 		onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
 		onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
 		onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
@@ -69,7 +71,9 @@ export function PulsarModel(
 		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
-		showAxes,
+		showAxesHelper,
+		showPulsarEquator,
+		showPulsarAxis,
 		onPulsarPhaseChange,
 		onPulsarBeamDirectionChange,
 		onCameraPositionChange,
@@ -93,7 +97,9 @@ export function PulsarModel(
 		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
-		showAxes: showAxes,
+		showAxesHelper: showAxesHelper,
+		showPulsarEquator: showPulsarEquator,
+		showPulsarAxis: showPulsarAxis,
 		onPulsarPhaseChange: onPulsarPhaseChange,
 		onPulsarBeamDirectionChange: onPulsarBeamDirectionChange,
 		onCameraPositionChange: onCameraPositionChange,
@@ -119,7 +125,7 @@ export function PulsarModel(
 		// Axes: +x = red, +y = green, +z = blue
 		const axesHelper = new THREE.AxesHelper(100);
 		axesHelper.name = "axesHelper";
-		axesHelper.visible = pulsarParams.showAxes ?? false;
+		axesHelper.visible = pulsarParams.showAxesHelper ?? false;
 		scene.add(axesHelper);
 
 		// Lighting
@@ -170,6 +176,7 @@ export function PulsarModel(
 		});
 		const pulsarAxis = new Line2(pulsarAxisGeometry, pulsarAxisMaterial);
 		pulsarAxis.name = "pulsarAxis";
+		pulsarAxis.visible = pulsarParams.showPulsarAxis ?? true;
 		pulsar.add(pulsarAxis);
 
 		// Equator
@@ -192,6 +199,7 @@ export function PulsarModel(
 		);
 		pulsarEquator.name = "pulsarEquator";
 		pulsarEquator.rotation.set(Math.PI / 2, 0, 0);
+		pulsarEquator.visible = pulsarParams.showPulsarEquator ?? true;
 		pulsar.add(pulsarEquator);
 
 		// Beams
@@ -353,6 +361,29 @@ export function PulsarModel(
 			resetCamera: () => {
 				modelRef.current?.orbitControls.reset();
 			},
+
+			// Get RGBA values for a pixel rendered at the specified coordinates on the canvas
+			// Used for testing purposes
+			getPixelRGBA: (x: number, y: number) => {
+				const { scene, camera, renderer } = modelRef.current ?? {};
+				const mountNode = mountRef.current;
+
+				if (!(scene && camera && renderer && mountNode)) return;
+
+				const renderTarget = new THREE.WebGLRenderTarget(
+					mountNode.clientWidth,
+					mountNode.clientHeight,
+				);
+
+				renderer.setRenderTarget(renderTarget);
+				renderer.render(scene, camera);
+				renderer.setRenderTarget(null);
+
+				const buffer = new Uint8Array(4);
+				renderer.readRenderTargetPixels(renderTarget, x, y, 1, 1, buffer);
+
+				return buffer;
+			},
 		};
 
 		return () => {
@@ -384,18 +415,46 @@ export function PulsarModel(
 		}
 	}, [orbitControlsEnabled]);
 
-	// Show/hide axes
+	// Show/hide axes helper
 	useEffect(() => {
-		pulsarParamsRef.current.showAxes = showAxes;
+		pulsarParamsRef.current.showAxesHelper = showAxesHelper;
 
-		const { scene } = modelRef.current ?? {};
-		if (scene) {
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
 			const axesHelper = scene.getObjectByName(
 				"axesHelper",
 			) as THREE.AxesHelper;
-			axesHelper.visible = showAxes ?? false;
+			axesHelper.visible = showAxesHelper ?? false;
+
+			renderer.render(scene, camera);
 		}
-	}, [showAxes]);
+	}, [showAxesHelper]);
+
+	// Show/hide pulsar equator
+	useEffect(() => {
+		pulsarParamsRef.current.showPulsarEquator = showPulsarEquator;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const pulsarEquator = scene.getObjectByName("pulsarEquator") as Line2;
+			pulsarEquator.visible = showPulsarEquator ?? false;
+
+			renderer.render(scene, camera);
+		}
+	}, [showPulsarEquator]);
+
+	// Show/hide pulsar axis
+	useEffect(() => {
+		pulsarParamsRef.current.showPulsarAxis = showPulsarAxis;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const pulsarAxis = scene.getObjectByName("pulsarAxis") as Line2;
+			pulsarAxis.visible = showPulsarAxis ?? false;
+
+			renderer.render(scene, camera);
+		}
+	}, [showPulsarAxis]);
 
 	// Change camera position from props if orbit controls are not enabled
 	useEffect(() => {

@@ -6,7 +6,7 @@ const pulseColorRGB = "255, 255, 0"; // Pulse color RGB
 const skyColorRGB = "135, 206, 235"; // Sky color RGB
 
 /**
- * "Sky view" of the pulsar i.e. just the beam pulse and not the pulsar itself, to simulate what an observer far away would be able to detect
+ * "Sky view" of the pulsar, i.e. just the beam pulse and not the pulsar itself, to simulate what an observer far away would be able to detect
  */
 export function PulsarSkyView(props: {
 	pulsarPhaseRad: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters

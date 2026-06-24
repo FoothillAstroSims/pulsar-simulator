@@ -83,9 +83,9 @@ describe("getPulsarBeamDirection", () => {
 				pulsarBeamLatitude,
 			);
 			console.log(dir);
-			expect(Math.abs(dir[0] - expected[0])).toBeLessThan(tolerance);
-			expect(Math.abs(dir[1] - expected[1])).toBeLessThan(tolerance);
-			expect(Math.abs(dir[2] - expected[2])).toBeLessThan(tolerance);
+			expect.soft(Math.abs(dir[0] - expected[0])).toBeLessThan(tolerance);
+			expect.soft(Math.abs(dir[1] - expected[1])).toBeLessThan(tolerance);
+			expect.soft(Math.abs(dir[2] - expected[2])).toBeLessThan(tolerance);
 		},
 	);
 });
