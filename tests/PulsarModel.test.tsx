@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { render, RenderResult } from "vitest-browser-react";
-import { PulsarModel } from "../src/components/PulsarModel";
+import { PulsarModel, PulsarModelProps } from "../src/components/PulsarModel";
 import {
 	CAMERA_POSITION_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_DEFAULT,
@@ -13,31 +13,38 @@ import {
 	pulsarPhaseDegToRad,
 } from "../src/components/pulsar-config";
 
-const pulsarModelProps = {
-	pulsarPhase: pulsarPhaseDegToRad(PULSAR_PHASE_DEG_DEFAULT),
-	pulsarPeriod: PULSAR_PERIOD_DEFAULT,
-	pulsarAxisEuler: pulsarAxisEulerDegToRad(PULSAR_AXIS_EULER_DEG_DEFAULT),
-	pulsarBeamLatitude: pulsarBeamLatitudeDegToRad(
-		PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
-	),
-	pulsarBeamRadius: PULSAR_BEAM_RADIUS_DEFAULT,
-	cameraPosition: CAMERA_POSITION_DEFAULT,
-	isAnimating: false,
-	orbitControlsEnabled: false,
-};
+function renderPulsarModel(
+	pulsarModelProps: PulsarModelProps & Record<string, unknown>,
+	mockRef: { current: Record<string, unknown> | null } = { current: null },
+) {
+	return (
+		<div style={{ width: "100vw", height: "100vh" }}>
+			<PulsarModel ref={mockRef} {...pulsarModelProps} />
+		</div>
+	);
+}
 
+let pulsarModelProps: PulsarModelProps & Record<string, unknown>;
 let mockRef: { current: Record<string, unknown> | null };
 let screen: RenderResult;
 
 beforeEach(async () => {
+	pulsarModelProps = {
+		pulsarPhase: pulsarPhaseDegToRad(PULSAR_PHASE_DEG_DEFAULT),
+		pulsarPeriod: PULSAR_PERIOD_DEFAULT,
+		pulsarAxisEuler: pulsarAxisEulerDegToRad(PULSAR_AXIS_EULER_DEG_DEFAULT),
+		pulsarBeamLatitude: pulsarBeamLatitudeDegToRad(
+			PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
+		),
+		pulsarBeamRadius: PULSAR_BEAM_RADIUS_DEFAULT,
+		cameraPosition: CAMERA_POSITION_DEFAULT,
+		isAnimating: false,
+		orbitControlsEnabled: false
+	};
 	mockRef = {
 		current: null,
 	};
-	screen = await render(
-		<div style={{ width: "100vw", height: "100vh" }}>
-			<PulsarModel ref={mockRef} {...pulsarModelProps} />
-		</div>,
-	);
+	screen = await render(renderPulsarModel(pulsarModelProps, mockRef));
 });
 
 describe("Three.js pulsar model", () => {
@@ -76,4 +83,35 @@ describe("Three.js pulsar model", () => {
 			).toBeGreaterThan(0);
 		});
 	});
+
+	test("Initial pulsar model renders correctly", async () => {
+		await expect(
+			screen.baseElement,
+			"Initial pulsar model render does not match screenshot",
+		).toMatchScreenshot("pulsar-model-init");
+	});
+
+	test.each([
+		{ name: "0", phase: 0 },
+		{ name: "pi_4", phase: Math.PI / 4 },
+		{ name: "pi_2", phase: Math.PI / 2 },
+		{ name: "pi", phase: Math.PI },
+		{ name: "7pi_4", phase: (7 * Math.PI) / 4 },
+		{ name: "2pi", phase: 2 * Math.PI },
+		{ name: "9pi_4", phase: 2 * Math.PI + Math.PI / 4 },
+		{ name: "neg_pi_4", phase: -Math.PI / 4 },
+	])(
+		"Pulsar model for phase $name = $phase renders correctly",
+		async ({ name, phase }) => {
+			const props = { ...pulsarModelProps };
+			props.pulsarPhase = phase;
+
+			await screen.rerender(renderPulsarModel(props));
+
+			await expect(
+				screen.baseElement,
+				`Pulsar model for phase ${name} = ${phase.toFixed(5)} does not match screenshot`,
+			).toMatchScreenshot(`pulsar-model-phase-${name}`);
+		},
+	);
 });

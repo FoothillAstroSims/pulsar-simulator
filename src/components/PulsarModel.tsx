@@ -56,6 +56,7 @@ export function PulsarModel(
 		showAxesHelper?: boolean; // Axes toggle
 		showPulsarEquator?: boolean;
 		showPulsarAxis?: boolean;
+		directionalLightEnabled?: boolean;
 		onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
 		onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
 		onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
@@ -74,6 +75,7 @@ export function PulsarModel(
 		showAxesHelper,
 		showPulsarEquator,
 		showPulsarAxis,
+		directionalLightEnabled,
 		onPulsarPhaseChange,
 		onPulsarBeamDirectionChange,
 		onCameraPositionChange,
@@ -100,6 +102,7 @@ export function PulsarModel(
 		showAxesHelper: showAxesHelper,
 		showPulsarEquator: showPulsarEquator,
 		showPulsarAxis: showPulsarAxis,
+		directionalLightEnabled: directionalLightEnabled,
 		onPulsarPhaseChange: onPulsarPhaseChange,
 		onPulsarBeamDirectionChange: onPulsarBeamDirectionChange,
 		onCameraPositionChange: onCameraPositionChange,
@@ -137,6 +140,7 @@ export function PulsarModel(
 		lightDirectional.name = "lightDirectional";
 		lightDirectional.position.set(...LIGHT_DIRECTION_DEFAULT);
 		lightDirectional.target.position.set(0, 0, 0);
+		lightDirectional.visible = pulsarParams.directionalLightEnabled ?? true;
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
 
@@ -437,7 +441,7 @@ export function PulsarModel(
 		const { scene, camera, renderer } = modelRef.current ?? {};
 		if (scene && camera && renderer) {
 			const pulsarEquator = scene.getObjectByName("pulsarEquator") as Line2;
-			pulsarEquator.visible = showPulsarEquator ?? false;
+			pulsarEquator.visible = showPulsarEquator ?? true;
 
 			renderer.render(scene, camera);
 		}
@@ -450,7 +454,7 @@ export function PulsarModel(
 		const { scene, camera, renderer } = modelRef.current ?? {};
 		if (scene && camera && renderer) {
 			const pulsarAxis = scene.getObjectByName("pulsarAxis") as Line2;
-			pulsarAxis.visible = showPulsarAxis ?? false;
+			pulsarAxis.visible = showPulsarAxis ?? true;
 
 			renderer.render(scene, camera);
 		}
