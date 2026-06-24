@@ -92,8 +92,8 @@ export const PULSAR_BEAM_RADIUS_MAX = PULSAR_BEAM_HEIGHT;
 export const PULSAR_BEAM_RADIUS_STEP = 0.1;
 
 // Phase-based beam intensity plot constants
-export const Y0 = -(2 ** 51); // Fixed y-values for the timeline in the phase-based plot
-export const Y1 = 2 ** 51 + 1.5;
+export const Y0 = -(2 ** 10); // Fixed y-values for the timeline in the phase-based plot
+export const Y1 = 2 ** 10 + 1.5;
 
 // Time-based beam intensity plot constants
 export const X_RANGE_LEN_TIME_DEFAULT = 6; // Default x range length i.e. number of seconds to show at once

@@ -110,7 +110,7 @@ describe("Three.js pulsar model", () => {
 
 			await expect(
 				screen.baseElement,
-				`Pulsar model for phase ${name} = ${phase.toFixed(5)} does not match screenshot`,
+				`Pulsar model for phase ${name} = ${phase} does not match screenshot`,
 			).toMatchScreenshot(`pulsar-model-phase-${name}`);
 		},
 	);
