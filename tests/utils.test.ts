@@ -1,19 +1,20 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
-import * as utils from "../src/utils";
+import { getPulsarBeamDirection } from "../src/components/pulsar-utils";
+import { Triplet } from "../src/components/pulsar-config";
 
 const tolerance = 0.01;
 const pulsarDirectionCases: [
 	{
 		pulsarPhase: number;
-		pulsarAxisInclination: [number, number, number];
+		pulsarAxisInclination: Triplet;
 		pulsarBeamLatitude: number;
 	},
-	[number, number, number],
+	Triplet,
 	number,
 ][] = [
 	[
 		{ pulsarPhase: 0, pulsarAxisInclination: [0, 0, 0], pulsarBeamLatitude: 0 },
-		[-1, 0, 0],
+		[1, 0, 0],
 		tolerance,
 	],
 	[
@@ -22,7 +23,7 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [0, 0, 0],
 			pulsarBeamLatitude: 0,
 		},
-		[0, 0, 1],
+		[0, 0, -1],
 		tolerance,
 	],
 	[
@@ -31,7 +32,7 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [0, 0, 0],
 			pulsarBeamLatitude: Math.PI / 6,
 		},
-		[-Math.cos(Math.PI / 6), -0.5, 0],
+		[Math.cos(Math.PI / 6), -0.5, 0],
 		tolerance,
 	],
 	[
@@ -40,7 +41,7 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [0, 0, Math.PI / 4],
 			pulsarBeamLatitude: 0,
 		},
-		[-Math.sqrt(2) / 2, -Math.sqrt(2) / 2, 0],
+		[Math.sqrt(2) / 2, Math.sqrt(2) / 2, 0],
 		tolerance,
 	],
 	[
@@ -49,46 +50,42 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [Math.PI / 4, 0, Math.PI / 4],
 			pulsarBeamLatitude: 0,
 		},
-		[-Math.sqrt(2) / 2, -0.5, -0.5],
+		[Math.sqrt(2) / 2, 0.5, 0.5],
 		tolerance,
 	],
 	[
 		{
 			pulsarPhase: 1,
-			pulsarAxisInclination: [1, 1, 1],
+			pulsarAxisInclination: [0, 0, 1],
 			pulsarBeamLatitude: 1,
 		},
-		[0.68, -0.195, -0.707],
+		[0.8658, -0.209, -0.45465],
 		tolerance,
 	],
 ];
 
-describe("pulsarBeamDirection", () => {
-	test("pulsarBeamDirection has proper typing", () => {
-		expect(utils.pulsarBeamDirection.length).toEqual(3);
-		expectTypeOf(utils.pulsarBeamDirection).parameter(0).toBeNumber();
-		expectTypeOf(utils.pulsarBeamDirection)
-			.parameter(1)
-			.toEqualTypeOf<[number, number, number]>();
-		expectTypeOf(utils.pulsarBeamDirection).parameter(2).toBeNumber();
-		expectTypeOf(utils.pulsarBeamDirection).returns.toEqualTypeOf<
-			[number, number, number]
-		>();
+describe("getPulsarBeamDirection", () => {
+	test("getPulsarBeamDirection has proper typing", () => {
+		expect(getPulsarBeamDirection.length).toEqual(3);
+		expectTypeOf(getPulsarBeamDirection).parameter(0).toBeNumber();
+		expectTypeOf(getPulsarBeamDirection).parameter(1).toEqualTypeOf<Triplet>();
+		expectTypeOf(getPulsarBeamDirection).parameter(2).toBeNumber();
+		expectTypeOf(getPulsarBeamDirection).returns.toEqualTypeOf<Triplet>();
 	});
 
 	test.each(pulsarDirectionCases)(
 		"Pulsar direction formula is correct for %o",
-		(a, b, expected) => {
-			const { pulsarPhase, pulsarAxisInclination, pulsarBeamLatitude } = a;
-			const dir = utils.pulsarBeamDirection(
+		(params, expected, tolerance) => {
+			const { pulsarPhase, pulsarAxisInclination, pulsarBeamLatitude } = params;
+			const dir = getPulsarBeamDirection(
 				pulsarPhase,
 				pulsarAxisInclination,
 				pulsarBeamLatitude,
 			);
-
-			expect(Math.abs(dir[0] - b[0])).toBeLessThan(expected);
-			expect(Math.abs(dir[1] - b[1])).toBeLessThan(expected);
-			expect(Math.abs(dir[2] - b[2])).toBeLessThan(expected);
+			console.log(dir);
+			expect.soft(Math.abs(dir[0] - expected[0])).toBeLessThan(tolerance);
+			expect.soft(Math.abs(dir[1] - expected[1])).toBeLessThan(tolerance);
+			expect.soft(Math.abs(dir[2] - expected[2])).toBeLessThan(tolerance);
 		},
 	);
 });

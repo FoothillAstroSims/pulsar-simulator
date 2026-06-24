@@ -4,10 +4,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/Addons.js";
-import { DISPLAY_FRAME_RATE } from "../utils";
 import {
-	createPulsarBeamGeometry,
-	LIGHT_DIRECTION_DEF,
+	LIGHT_DIRECTION_DEFAULT,
 	PULSAR_AXIS_COLOR,
 	PULSAR_AXIS_LINE_WIDTH,
 	PULSAR_BEAM_COLOR,
@@ -19,29 +17,49 @@ import {
 	PULSAR_EQUATOR_COLOR,
 	PULSAR_EQUATOR_LINE_WIDTH,
 	pulsarPhaseRadToDeg,
-	setPulsarBeamsRotation,
+	SHOW_DEBUG,
 	type Triplet,
-} from "./utils-pulsar";
-import { getMeshDirection } from "./utils-pulsar";
+} from "./pulsar-config";
+import {
+	createPulsarBeamGeometry,
+	getMeshDirection,
+	getPulsarBeamDirection,
+	setPulsarBeamsRotation,
+} from "./pulsar-utils";
 
-// Pulsar parameters
+/**
+ * Interface type for the required properties of the PulsarModel component
+ */
 export interface PulsarModelProps {
-	pulsarPhase: number; // Rotation around the pulsar's axis
-	pulsarPeriod: number; // Number of seconds for the pulsar to make one revolution around its axis
-	pulsarAxisEuler: Triplet; // Euler angles representing the rotation of the pulsar axis
-	pulsarBeamLatitude: number; // Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator
-	pulsarBeamRadius: number; // Radius of the pulsar beams
-	cameraPosition: Triplet; // Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin
-	isAnimating: boolean; // Animation toggle
-	orbitControlsEnabled: boolean; // Orbit controls toggle
-	onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
-	onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
-	onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
+	/** Rotation around the pulsar's axis, in radians */
+	pulsarPhase: number;
+	/** Number of seconds for the pulsar to make one revolution around its axis */
+	pulsarPeriod: number;
+	/** Euler angles, in radians, representing the rotation of the pulsar axis */
+	pulsarAxisEuler: Triplet;
+	/** Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator, in radians */
+	pulsarBeamLatitude: number;
+	/** Radius of the pulsar beams */
+	pulsarBeamRadius: number;
+	/** Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin */
+	cameraPosition: Triplet;
+	/** Toggles animation */
+	isAnimating: boolean;
 }
-
+/**
+ * Basic, simplified 3D model of a spinning pulsar emitting radio waves, made with Three.js.
+ */
 export function PulsarModel(
 	props: PulsarModelProps & {
-		ref?: React.RefObject<Record<string, unknown> | null>;
+		ref?: React.RefObject<Record<string, unknown> | null>; // Reference to the node containing the model
+		orbitControlsEnabled?: boolean; // Orbit controls toggle
+		showAxesHelper?: boolean; // Axes toggle
+		showPulsarEquator?: boolean;
+		showPulsarAxis?: boolean;
+		directionalLightEnabled?: boolean;
+		onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
+		onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
+		onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues
 	},
 ) {
 	const {
@@ -54,6 +72,10 @@ export function PulsarModel(
 		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
+		showAxesHelper,
+		showPulsarEquator,
+		showPulsarAxis,
+		directionalLightEnabled,
 		onPulsarPhaseChange,
 		onPulsarBeamDirectionChange,
 		onCameraPositionChange,
@@ -68,7 +90,7 @@ export function PulsarModel(
 		startAnimation: () => void;
 		stopAnimation: () => void;
 	} | null>(null); // References to model elements and parameters
-	const pulsarParamsRef = useRef<PulsarModelProps>({
+	const pulsarParamsRef = useRef({
 		pulsarPhase: pulsarPhase,
 		pulsarPeriod: pulsarPeriod,
 		pulsarAxisEuler: pulsarAxisEuler,
@@ -77,6 +99,10 @@ export function PulsarModel(
 		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
+		showAxesHelper: showAxesHelper,
+		showPulsarEquator: showPulsarEquator,
+		showPulsarAxis: showPulsarAxis,
+		directionalLightEnabled: directionalLightEnabled,
 		onPulsarPhaseChange: onPulsarPhaseChange,
 		onPulsarBeamDirectionChange: onPulsarBeamDirectionChange,
 		onCameraPositionChange: onCameraPositionChange,
@@ -91,6 +117,7 @@ export function PulsarModel(
 		let width = mountNode.clientWidth;
 		let height = mountNode.clientHeight;
 		let frameID: number;
+		let lastFrameTime: number | undefined;
 
 		// Pulsar parameters
 		const pulsarParams = pulsarParamsRef.current;
@@ -98,10 +125,11 @@ export function PulsarModel(
 		// Scene
 		const scene = new THREE.Scene();
 
-		// // Axes: +x = red, +y = green, +z = blue
-		// const axesHelper = new THREE.AxesHelper(100);
-		// axesHelper.name = "axesHelper";
-		// scene.add(axesHelper);
+		// Axes: +x = red, +y = green, +z = blue
+		const axesHelper = new THREE.AxesHelper(100);
+		axesHelper.name = "axesHelper";
+		axesHelper.visible = pulsarParams.showAxesHelper ?? false;
+		scene.add(axesHelper);
 
 		// Lighting
 		const lightAmbient = new THREE.AmbientLight(0xffffff, 0.2);
@@ -110,8 +138,9 @@ export function PulsarModel(
 
 		const lightDirectional = new THREE.DirectionalLight(0xffffff, 5);
 		lightDirectional.name = "lightDirectional";
-		lightDirectional.position.set(...LIGHT_DIRECTION_DEF);
+		lightDirectional.position.set(...LIGHT_DIRECTION_DEFAULT);
 		lightDirectional.target.position.set(0, 0, 0);
+		lightDirectional.visible = pulsarParams.directionalLightEnabled ?? true;
 		scene.add(lightDirectional);
 		scene.add(lightDirectional.target);
 
@@ -151,6 +180,7 @@ export function PulsarModel(
 		});
 		const pulsarAxis = new Line2(pulsarAxisGeometry, pulsarAxisMaterial);
 		pulsarAxis.name = "pulsarAxis";
+		pulsarAxis.visible = pulsarParams.showPulsarAxis ?? true;
 		pulsar.add(pulsarAxis);
 
 		// Equator
@@ -173,6 +203,7 @@ export function PulsarModel(
 		);
 		pulsarEquator.name = "pulsarEquator";
 		pulsarEquator.rotation.set(Math.PI / 2, 0, 0);
+		pulsarEquator.visible = pulsarParams.showPulsarEquator ?? true;
 		pulsar.add(pulsarEquator);
 
 		// Beams
@@ -242,7 +273,7 @@ export function PulsarModel(
 		};
 		orbitControls.addEventListener("change", reportCameraPosition);
 
-		orbitControls.enabled = pulsarParams.orbitControlsEnabled;
+		orbitControls.enabled = pulsarParams.orbitControlsEnabled ?? false;
 		orbitControls.update();
 		// TODO: Create on-screen buttons to rotate camera
 
@@ -257,12 +288,17 @@ export function PulsarModel(
 		};
 
 		// Animation
-		const animate = () => {
+		const animate = (time: number) => {
+			// Get time elapsed since the last animation frame
+			const dt =
+				lastFrameTime === undefined ? 0 : (time - lastFrameTime) / 1000;
+			lastFrameTime = time;
+
 			if (pulsarParams.isAnimating) {
-				// Rotate pulsar
+				// Rotate pulsar in real time
 				pulsarParams.pulsarPhase =
 					(pulsarParams.pulsarPhase +
-						(2 * Math.PI) / (pulsarParams.pulsarPeriod * DISPLAY_FRAME_RATE)) %
+						(2 * Math.PI * dt) / pulsarParams.pulsarPeriod) %
 					(2 * Math.PI);
 				pulsar.rotation.y = pulsarParams.pulsarPhase;
 
@@ -283,6 +319,7 @@ export function PulsarModel(
 
 		const startAnimation = () => {
 			if (!frameID) {
+				lastFrameTime = undefined;
 				frameID = window.requestAnimationFrame(animate);
 			}
 			orbitControls.update();
@@ -328,6 +365,29 @@ export function PulsarModel(
 			resetCamera: () => {
 				modelRef.current?.orbitControls.reset();
 			},
+
+			// Get RGBA values for a pixel rendered at the specified coordinates on the canvas
+			// Used for testing purposes
+			getPixelRGBA: (x: number, y: number) => {
+				const { scene, camera, renderer } = modelRef.current ?? {};
+				const mountNode = mountRef.current;
+
+				if (!(scene && camera && renderer && mountNode)) return;
+
+				const renderTarget = new THREE.WebGLRenderTarget(
+					mountNode.clientWidth,
+					mountNode.clientHeight,
+				);
+
+				renderer.setRenderTarget(renderTarget);
+				renderer.render(scene, camera);
+				renderer.setRenderTarget(null);
+
+				const buffer = new Uint8Array(4);
+				renderer.readRenderTargetPixels(renderTarget, x, y, 1, 1, buffer);
+
+				return buffer;
+			},
 		};
 
 		return () => {
@@ -355,9 +415,50 @@ export function PulsarModel(
 		const { orbitControls } = modelRef.current ?? {};
 		if (orbitControls) {
 			// eslint-disable-next-line react-hooks/immutability
-			orbitControls.enabled = orbitControlsEnabled;
+			orbitControls.enabled = orbitControlsEnabled ?? false;
 		}
 	}, [orbitControlsEnabled]);
+
+	// Show/hide axes helper
+	useEffect(() => {
+		pulsarParamsRef.current.showAxesHelper = showAxesHelper;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const axesHelper = scene.getObjectByName(
+				"axesHelper",
+			) as THREE.AxesHelper;
+			axesHelper.visible = showAxesHelper ?? false;
+
+			renderer.render(scene, camera);
+		}
+	}, [showAxesHelper]);
+
+	// Show/hide pulsar equator
+	useEffect(() => {
+		pulsarParamsRef.current.showPulsarEquator = showPulsarEquator;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const pulsarEquator = scene.getObjectByName("pulsarEquator") as Line2;
+			pulsarEquator.visible = showPulsarEquator ?? true;
+
+			renderer.render(scene, camera);
+		}
+	}, [showPulsarEquator]);
+
+	// Show/hide pulsar axis
+	useEffect(() => {
+		pulsarParamsRef.current.showPulsarAxis = showPulsarAxis;
+
+		const { scene, camera, renderer } = modelRef.current ?? {};
+		if (scene && camera && renderer) {
+			const pulsarAxis = scene.getObjectByName("pulsarAxis") as Line2;
+			pulsarAxis.visible = showPulsarAxis ?? true;
+
+			renderer.render(scene, camera);
+		}
+	}, [showPulsarAxis]);
 
 	// Change camera position from props if orbit controls are not enabled
 	useEffect(() => {
@@ -452,24 +553,26 @@ export function PulsarModel(
 		}
 	}, [pulsarBeamRadius]);
 
-	// // Display debug info about the model
-	// useEffect(() => {
-	// 	const { scene } = modelRef.current ?? {};
+	// Display debug info about the model
+	useEffect(() => {
+		if (SHOW_DEBUG) {
+			const { scene } = modelRef.current ?? {};
 
-	// 	if (scene) {
-	// 		const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
-	// 		pulsarParamsRef.current.onPulsarBeamDirectionChange?.(
-	// 			getMeshDirection(pulsarBeam1, [0, 1, 0]),
-	// 		);
-	// 		console.log(
-	// 			`Pulsar beam direction: ${getMeshDirection(pulsarBeam1, [0, 1, 0]).map((x) => x.toFixed(5))}`,
-	// 		);
-	// 	}
-	// }, [pulsarPhase, pulsarAxisEuler, pulsarBeamLatitude]);
+			if (scene) {
+				const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
+				const dir = getMeshDirection(pulsarBeam1, [0, 1, 0]);
+				console.log(`Pulsar beam direction: ${dir.map((x) => x.toFixed(5))}`);
+				console.log(
+					`getPulsarBeamDirection: ${getPulsarBeamDirection(pulsarPhase, pulsarAxisEuler, pulsarBeamLatitude).map((x) => x.toFixed(5))}`,
+				);
+			}
+		}
+	}, [pulsarPhase, pulsarAxisEuler, pulsarBeamLatitude]);
 
 	return (
 		<div
 			className={`pulsar-model${orbitControlsEnabled ? " orbit-controls" : ""}`}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 			ref={mountRef}
 		/>
 	);

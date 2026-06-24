@@ -8,47 +8,42 @@ const createPlotlyComponent =
 const Plot = createPlotlyComponent(Plotly);
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DISPLAY_FRAME_RATE } from "../utils";
 import {
-	getPulsarBeamDirection,
-	getPulsarBeamIntensity,
 	PULSAR_PHASE_DEF_MAX,
 	PULSAR_PHASE_DEG_MIN,
-	pulsarPhaseDegToRad,
 	PULSAR_PHASE_DEG_XAXIS,
+	pulsarPhaseDegToRad,
+	X_MAX_ALLOWED_TIME_DEFAULT,
+	X_MIN_ALLOWED_TIME_DEFAULT,
+	X_RANGE_LEN_TIME_DEFAULT,
+	X_RANGE_TIME_INITIAL,
+	Y0,
+	Y1,
+	Y_RANGE_TIME_DEFAULT,
 	type Triplet,
-} from "./utils-pulsar";
+} from "./pulsar-config";
+import { getPulsarBeamDirection, getPulsarBeamIntensity } from "./pulsar-utils";
 
-// Phase-based plot constants
-const Y0 = -(2 ** 51) + 1.5; // Fixed y-values for the timeline in the phase-based plot
-const Y1 = 2 ** 51;
-
-// Time-based plot constants
-const MAX_POINTS = 6 * DISPLAY_FRAME_RATE; // Max number of points to render at once on the time-based plot. Generally should equal (display refresh rate) * (number of seconds of past data to show)
-const X_RANGE_LEN_TIME_DEFAULT = MAX_POINTS / DISPLAY_FRAME_RATE; // Default x range length
-const X_RANGE_TIME_DEFAULT: [number, number] = [-0.1, X_RANGE_LEN_TIME_DEFAULT]; // Default x range
-const Y_RANGE_TIME_DEFAULT: [number, number] = [-0.01, 1.05]; // Default y range
-const X_MIN_ALLOWED_TIME_DEFAULT = 0; // Default x minallowed
-const X_MAX_ALLOWED_TIME_DEFAULT = X_RANGE_LEN_TIME_DEFAULT; // Default x maxallowed
-
-// Phase-based pulsar beam intensity plot
+/**
+ * Phase-based pulsar beam intensity plot, made with Plotly's React library
+ */
 export function PulsarBeamIntensityPlotPhase(props: {
-	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisEuler: Triplet;
-	pulsarBeamLatitude: number;
+	pulsarPhaseDeg: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
+	pulsarAxisEulerRad: Triplet;
+	pulsarBeamLatitudeRad: number;
 	cameraDirection: Triplet;
-	pulsarBeamAngle: number;
+	pulsarBeamAngleRad: number;
 	isAnimating: boolean;
 	showPhaseTimeline: boolean; // Show a draggable timeline that matches the pulsar phase
 	showPhaseTimelineLabel: boolean; // Show a label atop the timeline
 	onPulsarPhaseChange?: (phase: number) => void;
 }) {
 	const {
-		pulsarPhase,
-		pulsarAxisEuler,
-		pulsarBeamLatitude,
+		pulsarPhaseDeg: pulsarPhase,
+		pulsarAxisEulerRad: pulsarAxisEuler,
+		pulsarBeamLatitudeRad: pulsarBeamLatitude,
 		cameraDirection,
-		pulsarBeamAngle,
+		pulsarBeamAngleRad: pulsarBeamAngle,
 		isAnimating,
 		showPhaseTimeline,
 		showPhaseTimelineLabel,
@@ -79,7 +74,8 @@ export function PulsarBeamIntensityPlotPhase(props: {
 		return {
 			x: PULSAR_PHASE_DEG_XAXIS,
 			y: pulsarPhaseY,
-			type: "scattergl",
+			// type: "scattergl",
+			type: "scatter",
 			mode: "lines",
 			line: {
 				shape: "spline",
@@ -111,7 +107,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			timeline.label = {
 				text: `Phase: ${pulsarPhase.toFixed(3)}`,
 				font: {
-					size: 20,
+					size: 16,
 					shadow: "lightgray 1px 1px 1px",
 				},
 				xanchor: "right",
@@ -194,39 +190,44 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			data={[data]}
 			layout={layout}
 			config={config}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 			onRelayout={handleRelayout}
 			useResizeHandler
 		/>
 	);
 }
 
-// Live updating time-based pulsar beam intensity plot
+/**
+ * Live updating time-based pulsar beam intensity plot, made with Plotly's React library
+ */
 export function PulsarBeamIntensityPlotTime(props: {
 	ref?: React.RefObject<Record<string, unknown> | null>;
-	pulsarPhase: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
-	pulsarAxisEuler: Triplet;
-	pulsarBeamLatitude: number;
+	pulsarPhaseRad: number; // See PulsarModelProps in PulsarModel.tsx for descriptions of the pulsar-related parameters
+	pulsarAxisEulerRad: Triplet;
+	pulsarBeamLatitudeRad: number;
 	cameraDirection: Triplet;
-	pulsarBeamAngle: number;
+	pulsarBeamAngleRad: number;
 	isAnimating: boolean;
 }) {
 	const {
 		ref,
-		pulsarPhase,
-		pulsarAxisEuler,
-		pulsarBeamLatitude,
+		pulsarPhaseRad: pulsarPhase,
+		pulsarAxisEulerRad: pulsarAxisEuler,
+		pulsarBeamLatitudeRad: pulsarBeamLatitude,
 		cameraDirection,
-		pulsarBeamAngle,
+		pulsarBeamAngleRad: pulsarBeamAngle,
 		isAnimating,
 	} = props;
 
 	const gdRef = useRef<Plotly.Root>(null); // Div element that the Plot component is rendered inside
-	const xCounterRef = useRef(0); // Counter used to help update plot data
 	const xRangeLenRef = useRef(X_RANGE_LEN_TIME_DEFAULT); // x-axis range length
-	const hasInitializedRef = useRef(false); // Flag that tracks whether the stream has intialized
+	const lastPhaseRef = useRef<number | null>(null); // Value of the phase in the previous frame. Used to prevent frame-skipping
+	const lastTimeRef = useRef<number | null>(null); // Time of the last plot update. Null = no previous update
+	const totalTimeRef = useRef(0); // Total elapsed time
+	const hasInitializedRef = useRef(false); // Flag for stream initialization
 
 	// Initial data point and style
-	// Bit of a hack to capture the values of the props when the component is first mounted and not from any subsequent re-renders
+	// Bit of a hack to capture and store the values of the props when the component is first rendered
 	const [data] = useState<Partial<Plotly.PlotData>[]>([
 		{
 			x: [0],
@@ -241,10 +242,10 @@ export function PulsarBeamIntensityPlotTime(props: {
 					pulsarBeamAngle,
 				),
 			],
-			type: "scattergl",
+			// type: "scattergl",
+			type: "scatter",
 			mode: "lines",
 			line: {
-				shape: "spline",
 				width: 4,
 			},
 		},
@@ -257,7 +258,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 				title: {
 					text: "Time (s)",
 				},
-				range: X_RANGE_TIME_DEFAULT,
+				range: X_RANGE_TIME_INITIAL,
 				griddash: "dash",
 				gridcolor: "lightgray",
 				rangemode: "nonnegative",
@@ -292,7 +293,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 		};
 	}, []);
 
-	// Generate a new point on the plot in a form that can be used for Plotly's update and extendTrace methods
+	// Callback to generate a new point on the plot in a form that can be used for Plotly's update and extendTrace methods
 	const generatePointUpdate = useCallback(
 		(x: number): Partial<Plotly.Data> => {
 			if (
@@ -340,17 +341,19 @@ export function PulsarBeamIntensityPlotTime(props: {
 				const gd = gdRef.current;
 				if (!gd) return;
 
-				// Reset refs
-				xCounterRef.current = 0;
+				// Reset plot layout and streaming refs
 				xRangeLenRef.current = X_RANGE_LEN_TIME_DEFAULT;
+				lastPhaseRef.current = pulsarPhase;
+				totalTimeRef.current = 0;
+				lastTimeRef.current = null;
 				hasInitializedRef.current = false;
 
-				// Replace the data and layout of the current trace with initial, default values
+				// Replace the data and layout of the current trace with initial values
 				Plotly.update(
 					gd,
 					generatePointUpdate(0),
 					{
-						"xaxis.range": X_RANGE_TIME_DEFAULT,
+						"xaxis.range": X_RANGE_TIME_INITIAL,
 						"xaxis.minallowed": X_MIN_ALLOWED_TIME_DEFAULT,
 						"xaxis.maxallowed": X_MAX_ALLOWED_TIME_DEFAULT,
 						"yaxis.range": Y_RANGE_TIME_DEFAULT,
@@ -359,22 +362,32 @@ export function PulsarBeamIntensityPlotTime(props: {
 				);
 			},
 		};
-	}, [ref, generatePointUpdate]);
+	}, [ref, generatePointUpdate, pulsarPhase]);
 
 	// Stream beam intensity data from prop changes
 	useEffect(() => {
 		// Prevent adding a new point at the very start, to prevent double-plotting of the initial value
 		if (!hasInitializedRef.current) {
 			hasInitializedRef.current = true;
+			lastPhaseRef.current = pulsarPhase; // If the stream just initialized, also initialize the value of the previous phase
 			return;
 		}
+
+		// Avoid updating the plot if the previous phase is the same as the current phase
+		// Absolute value distance is used instead of a strict equality due to floating point issues
+		if (Math.abs(pulsarPhase - lastPhaseRef.current!) <= 0.001) return;
+		lastPhaseRef.current = pulsarPhase;
 
 		const gd = gdRef.current;
 		if (!gd) return;
 
-		// console.log("tick");
-		xCounterRef.current += 1; // Increase x-coordinate by one
-		const xUpdate = xCounterRef.current / DISPLAY_FRAME_RATE; // Get updated x-coordinate
+		// Update the time to the next tick
+		const now = performance.now();
+		if (lastTimeRef.current !== null)
+			totalTimeRef.current += (now - lastTimeRef.current) / 1000;
+		lastTimeRef.current = now;
+
+		const xUpdate = totalTimeRef.current; // Get most recent time
 		const xRangeLen = xRangeLenRef.current; // Get the current range length
 
 		// Change x range if it exceeds the current range length. This causes the plot to scroll continuously
@@ -387,7 +400,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 
 		// extendTraces is more efficient than React's native state management
 		Plotly.extendTraces(gd, generatePointUpdate(xUpdate), [0]);
-	}, [generatePointUpdate]);
+	}, [generatePointUpdate, pulsarPhase]);
 
 	// Toggle plot hovering and zooming/panning based on the animation
 	useEffect(() => {
@@ -400,6 +413,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 				"xaxis.fixedrange": true,
 			} as Partial<Plotly.Layout>);
 		} else {
+			lastTimeRef.current = null;
 			Plotly.relayout(gd, {
 				hovermode: "closest",
 				"xaxis.fixedrange": false,
@@ -413,6 +427,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 			data={data}
 			layout={layout}
 			config={config}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 			onInitialized={(_figure, gd) => {
 				gdRef.current = gd as unknown as Plotly.Root; // Get reference to the graph div
 			}}

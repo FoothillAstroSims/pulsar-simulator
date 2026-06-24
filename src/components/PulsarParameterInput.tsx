@@ -4,6 +4,9 @@ export interface PulsarParameterInputProps extends ComponentProps<"input"> {
 	label?: string;
 }
 
+/**
+ * Inputs for a pulsar model parameter
+ */
 export function PulsarParameterInput(props: PulsarParameterInputProps) {
 	const { label, name, ...rest } = props;
 

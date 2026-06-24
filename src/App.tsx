@@ -1,3 +1,4 @@
+import "bootstrap/dist/css/bootstrap.min.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import {
@@ -8,19 +9,17 @@ import { PulsarModel } from "./components/PulsarModel";
 import { PulsarParameterInput } from "./components/PulsarParameterInput";
 import { PulsarSkyView } from "./components/PulsarSkyView";
 import {
-	CAMERA_POSITION_DEF,
+	CAMERA_POSITION_DEFAULT,
 	IS_ANIMATING_DEFAULT,
 	ORBIT_CONTROLS_ENABLED_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_MAX,
 	PULSAR_AXIS_EULER_DEG_MIN,
-	pulsarAxisEulerDegToRad,
 	PULSAR_AXIS_EULER_DEG_STEP,
 	PULSAR_BEAM_HEIGHT,
 	PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
 	PULSAR_BEAM_LATITUDE_DEG_MAX,
 	PULSAR_BEAM_LATITUDE_DEG_MIN,
-	pulsarBeamLatitudeDegToRad,
 	PULSAR_BEAM_LATITUDE_DEG_STEP,
 	PULSAR_BEAM_RADIUS_DEFAULT,
 	PULSAR_BEAM_RADIUS_MAX,
@@ -30,17 +29,22 @@ import {
 	PULSAR_PERIOD_MAX,
 	PULSAR_PERIOD_MIN,
 	PULSAR_PERIOD_STEP,
-	PULSAR_PHASE_DEG_DEFAULT,
 	PULSAR_PHASE_DEF_MAX,
+	PULSAR_PHASE_DEG_DEFAULT,
 	PULSAR_PHASE_DEG_MIN,
-	pulsarPhaseDegToRad,
 	PULSAR_PHASE_DEG_STEP,
+	pulsarAxisEulerDegToRad,
+	pulsarBeamLatitudeDegToRad,
+	pulsarPhaseDegToRad,
 	type Triplet,
-} from "./components/utils-pulsar";
+} from "./components/pulsar-config";
 import { createKeyDownEventHandler } from "./utils";
 
 export default function App() {
-	const [pulsarPhaseDeg, setPulsarPhaseDeg] = useState(PULSAR_PHASE_DEG_DEFAULT);
+	// Initialize state variables
+	const [pulsarPhaseDeg, setPulsarPhaseDeg] = useState(
+		PULSAR_PHASE_DEG_DEFAULT,
+	);
 	const [pulsarPeriod, setPulsarPeriod] = useState(PULSAR_PERIOD_DEFAULT);
 	const [pulsarBeamLatitudeDeg, setPulsarBeamLatitudeDeg] = useState(
 		PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
@@ -51,14 +55,17 @@ export default function App() {
 	const [pulsarBeamRadius, setPulsarBeamRadius] = useState(
 		PULSAR_BEAM_RADIUS_DEFAULT,
 	);
-	const [cameraPosition, setCameraPosition] = useState(CAMERA_POSITION_DEF);
+	const [cameraPosition, setCameraPosition] = useState(CAMERA_POSITION_DEFAULT);
 	const [isAnimating, setIsAnimating] = useState(IS_ANIMATING_DEFAULT);
 	const [orbitControlsEnabled, setOrbitControlsEnabled] = useState(
 		ORBIT_CONTROLS_ENABLED_DEFAULT,
 	);
+	const [showPulsarEquator, setShowPulsarEquator] = useState(true);
+	const [showPulsarAxis, setShowPulsarAxis] = useState(true);
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
 	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
 
+	// Memoized values calculated from state variables
 	const pulsarPhaseRad = useMemo(
 		() => pulsarPhaseDegToRad(pulsarPhaseDeg),
 		[pulsarPhaseDeg],
@@ -76,9 +83,11 @@ export default function App() {
 		[pulsarBeamRadius],
 	);
 
+	// References to components
 	const pulsarModelRef = useRef<Record<string, unknown> | null>(null);
 	const pulsarPlotTimeRef = useRef<Record<string, unknown> | null>(null);
 
+	/** Callback to reset all model parameters */
 	const resetPulsarParameters = useCallback(() => {
 		if (!isAnimating) {
 			setPulsarPhaseDeg(PULSAR_PHASE_DEG_DEFAULT);
@@ -92,19 +101,19 @@ export default function App() {
 
 	// Register keyboard event handlers
 	useEffect(() => {
-		// Start/stop animation
+		/** Keyboard event handler for starting and stopping animation */
 		const isAnimatingHandler = createKeyDownEventHandler(["p", "P"], () =>
 			setIsAnimating((prev) => !prev),
 		);
 		window.addEventListener("keydown", isAnimatingHandler);
 
-		// Reset camera
+		/** Keyboard event handler for resetting the camera position */
 		const resetCameraHandler = createKeyDownEventHandler(["c", "C"], () =>
 			(pulsarModelRef.current?.resetCamera as () => void)(),
 		);
 		window.addEventListener("keydown", resetCameraHandler);
 
-		// Reset parameters
+		/** Keyboard event handler for resetting pulsar model parameters */
 		const resetPulsarParametersHandler = createKeyDownEventHandler(
 			["r", "R"],
 			() => resetPulsarParameters(),
@@ -120,10 +129,6 @@ export default function App() {
 
 	return (
 		<>
-			<div>
-				<p>Foothill AstroSims: Pulsar Beam Intensity</p>
-			</div>
-
 			<div className="pulsar-parameters">
 				<div style={{ flex: 1, display: "flex", justifyItems: "center" }}>
 					<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
@@ -162,7 +167,7 @@ export default function App() {
 				</div>
 				<PulsarParameterInput
 					name="pulsarPhase"
-					label="Phase"
+					label="Phase (°)"
 					min={PULSAR_PHASE_DEG_MIN}
 					max={PULSAR_PHASE_DEF_MAX}
 					step={PULSAR_PHASE_DEG_STEP}
@@ -175,7 +180,7 @@ export default function App() {
 				/>{" "}
 				<PulsarParameterInput
 					name="pulsarPeriod"
-					label="Period"
+					label="Period (s)"
 					min={PULSAR_PERIOD_MIN}
 					max={PULSAR_PERIOD_MAX}
 					step={PULSAR_PERIOD_STEP}
@@ -220,7 +225,7 @@ export default function App() {
 				/> */}
 				<PulsarParameterInput
 					name="pulsarInclinationAngle"
-					label="Inclination angle"
+					label="Inclination angle (°)"
 					min={PULSAR_AXIS_EULER_DEG_MIN[2]}
 					max={PULSAR_AXIS_EULER_DEG_MAX[2]}
 					step={PULSAR_AXIS_EULER_DEG_STEP}
@@ -234,10 +239,10 @@ export default function App() {
 							]);
 						// console.log(`Pulsar inclination (Euler Z): ${e.target.value}`);
 					}}
-				/>{" "}
+				/>
 				<PulsarParameterInput
 					name="pulsarBeamLatitude"
-					label="Beam latitude"
+					label="Beam latitude (°)"
 					min={PULSAR_BEAM_LATITUDE_DEG_MIN}
 					max={PULSAR_BEAM_LATITUDE_DEG_MAX}
 					step={PULSAR_BEAM_LATITUDE_DEG_STEP}
@@ -247,10 +252,10 @@ export default function App() {
 							setPulsarBeamLatitudeDeg(parseFloat(e.target.value));
 						// console.log(`Pulsar beam latitude: ${e.target.value}`);
 					}}
-				/>{" "}
+				/>
 				<PulsarParameterInput
 					name="pulsarBeamRadius"
-					label="Beam angle"
+					label="Beam radius"
 					min={PULSAR_BEAM_RADIUS_MIN}
 					max={PULSAR_BEAM_RADIUS_MAX}
 					step={PULSAR_BEAM_RADIUS_STEP}
@@ -260,6 +265,24 @@ export default function App() {
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
+				<div style={{ display: "flex" }}>
+					<label style={{ flex: 1 }}>
+						<input
+							type="checkbox"
+							checked={showPulsarEquator}
+							onChange={() => setShowPulsarEquator((prev) => !prev)}
+						/>
+						Show equator
+					</label>
+					<label style={{ flex: 1 }}>
+						<input
+							type="checkbox"
+							checked={showPulsarAxis}
+							onChange={() => setShowPulsarAxis((prev) => !prev)}
+						/>
+						Show axis of rotation
+					</label>
+				</div>
 			</div>
 
 			<div
@@ -283,8 +306,11 @@ export default function App() {
 						cameraPosition={cameraPosition}
 						isAnimating={isAnimating}
 						orbitControlsEnabled={orbitControlsEnabled}
+						showPulsarEquator={showPulsarEquator}
+						showPulsarAxis={showPulsarAxis}
 						onPulsarPhaseChange={setPulsarPhaseDeg}
 						onCameraPositionChange={setCameraPosition}
+						// showAxesHelper={true}
 					/>
 				</div>
 				<div
@@ -300,11 +326,11 @@ export default function App() {
 				>
 					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotPhase
-							pulsarPhase={pulsarPhaseDeg}
-							pulsarAxisEuler={pulsarAxisEulerRad}
-							pulsarBeamLatitude={pulsarBeamLatitudeRad}
+							pulsarPhaseDeg={pulsarPhaseDeg}
+							pulsarAxisEulerRad={pulsarAxisEulerRad}
+							pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
 							cameraDirection={cameraPosition}
-							pulsarBeamAngle={pulsarBeamAngleRad}
+							pulsarBeamAngleRad={pulsarBeamAngleRad}
 							isAnimating={isAnimating}
 							showPhaseTimeline={showPhaseTimeline}
 							showPhaseTimelineLabel={showPhaseTimelineLabel}
@@ -333,11 +359,11 @@ export default function App() {
 					<div className="pulsar-plot" style={{ flex: 4 }}>
 						<PulsarBeamIntensityPlotTime
 							ref={pulsarPlotTimeRef}
-							pulsarPhase={pulsarPhaseRad}
-							pulsarAxisEuler={pulsarAxisEulerRad}
-							pulsarBeamLatitude={pulsarBeamLatitudeRad}
+							pulsarPhaseRad={pulsarPhaseRad}
+							pulsarAxisEulerRad={pulsarAxisEulerRad}
+							pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
 							cameraDirection={cameraPosition}
-							pulsarBeamAngle={pulsarBeamAngleRad}
+							pulsarBeamAngleRad={pulsarBeamAngleRad}
 							isAnimating={isAnimating}
 						/>
 					</div>
