@@ -12,12 +12,6 @@ import {
 	type Triplet,
 } from "./pulsar-config";
 
-// Generate a range of values
-export function range(start: number, stop: number, step: number): number[] {
-	const len = Math.floor((stop - start) / step);
-	return Array.from({ length: len }, (_, i) => start + i * step);
-}
-
 // Create geometry for a pulsar beam
 export function createPulsarBeamGeometry(radius: number): THREE.ConeGeometry {
 	return new THREE.ConeGeometry(

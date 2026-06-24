@@ -110,7 +110,7 @@ export function PulsarSkyView(props: {
 		<div
 			ref={containerRef}
 			className="pulsar-sky-view"
-			style={{ width: "100%", height: "100%" }}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 		>
 			<canvas ref={canvasRef} />
 		</div>

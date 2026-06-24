@@ -190,6 +190,7 @@ export function PulsarBeamIntensityPlotPhase(props: {
 			data={[data]}
 			layout={layout}
 			config={config}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 			onRelayout={handleRelayout}
 			useResizeHandler
 		/>
@@ -426,6 +427,7 @@ export function PulsarBeamIntensityPlotTime(props: {
 			data={data}
 			layout={layout}
 			config={config}
+			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
 			onInitialized={(_figure, gd) => {
 				gdRef.current = gd as unknown as Plotly.Root; // Get reference to the graph div
 			}}

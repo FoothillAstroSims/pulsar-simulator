@@ -1,7 +1,7 @@
 /* 
 Configurable values and derived methods for use in the pulsar simulation
 */
-import { range } from "./pulsar-utils";
+import { range } from "../utils";
 
 export type Triplet = [number, number, number];
 

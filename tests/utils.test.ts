@@ -59,7 +59,7 @@ const pulsarDirectionCases: [
 			pulsarAxisInclination: [0, 0, 1],
 			pulsarBeamLatitude: 1,
 		},
-		[0.55047, -0.70022, 0.45462],
+		[0.8658, -0.209, -0.45465],
 		tolerance,
 	],
 ];

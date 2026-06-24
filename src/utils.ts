@@ -23,3 +23,16 @@ export function createKeyDownEventHandler(
 		}
 	};
 }
+
+
+/**
+ * Generate a range of numerical values, similar to Python's `range` builtin
+ * @param start Start value
+ * @param stop End value
+ * @param step Step size
+ * @returns Range of values between the start and end, inclusive
+ */
+export function range(start: number, stop: number, step: number): number[] {
+	const len = Math.floor((stop - start) / step);
+	return Array.from({ length: len }, (_, i) => start + i * step);
+}

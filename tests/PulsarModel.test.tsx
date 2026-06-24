@@ -29,7 +29,7 @@ const pulsarModelProps = {
 describe("Three.js pulsar model", () => {
 	test("Pulsar model loads", async () => {
 		const screen = await render(
-			<div style={{ width: "1000px", height: "1000px", minHeight: "1000px" }}>
+			<div style={{ width: "100vw", height: "100vh" }}>
 				<PulsarModel {...pulsarModelProps} />
 			</div>,
 		);
@@ -43,6 +43,7 @@ describe("Three.js pulsar model", () => {
 		const canvas = screen.container.querySelector(
 			"canvas",
 		) as HTMLCanvasElement;
+		console.log(canvas);
 		expect(canvas, "Canvas is not an HTML element").toBeInstanceOf(HTMLElement);
 		expect(canvas.width, "Canvas width is 0").toBeGreaterThan(0);
 		expect(canvas.height, "Canvas height is 0").toBeGreaterThan(0);
