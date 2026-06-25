@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Container, Nav, Navbar } from "react-bootstrap";
 import "./App.css";
 import {
 	PulsarBeamIntensityPlotPhase,
@@ -39,6 +40,7 @@ import {
 	type Triplet,
 } from "./components/pulsar-config";
 import { createKeyDownEventHandler } from "./utils";
+import { HelpModal, AboutModal } from "./components/Modals";
 
 export default function App() {
 	// Initialize state variables
@@ -64,6 +66,8 @@ export default function App() {
 	const [showPulsarAxis, setShowPulsarAxis] = useState(true);
 	const [showPhaseTimeline, setShowPhaseTimeline] = useState(true);
 	const [showPhaseTimelineLabel, setShowPhaseTimelineLabel] = useState(false);
+	const [showHelpModal, setShowHelpModal] = useState(false);
+	const [showAboutModal, setShowAboutModal] = useState(false);
 
 	// Memoized values calculated from state variables
 	const pulsarPhaseRad = useMemo(
@@ -128,7 +132,36 @@ export default function App() {
 	}, [resetPulsarParameters]);
 
 	return (
-		<>
+		<Container fluid>
+			<HelpModal
+				showHelpModal={showHelpModal}
+				setShowHelpModal={setShowHelpModal}
+			/>
+			<AboutModal 
+				showAboutModal={showAboutModal}
+				setShowAboutModal={setShowAboutModal}
+			/>
+			<Navbar bg="body-tertiary" expand="sm">
+				<Navbar.Brand className="mx-3">
+					Foothill AstroSims – Pulsar Beam Intensity
+				</Navbar.Brand>
+				<Navbar.Toggle aria-controls="basic-navbar-nav" />
+				<Navbar.Collapse
+					id="basic-navbar-nav"
+					className="justify-content-end mx-3"
+				>
+					<Nav
+						onSelect={(key) => {
+							if (key === "help") setShowHelpModal(true);
+							if (key === "about") setShowAboutModal(true);
+						}}
+					>
+						<Nav.Link eventKey="help">Help</Nav.Link>
+						<Nav.Link eventKey="about">About</Nav.Link>
+					</Nav>
+				</Navbar.Collapse>
+			</Navbar>
+
 			<div className="pulsar-parameters">
 				<div style={{ flex: 1, display: "flex", justifyItems: "center" }}>
 					<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
@@ -290,7 +323,7 @@ export default function App() {
 				style={{
 					display: "flex",
 					flexDirection: "row",
-					width: "100vw",
+					width: "100%",
 					height: "75vh",
 					minHeight: "400px",
 				}}
@@ -396,6 +429,6 @@ export default function App() {
 					</div>
 				</div>
 			</div>
-		</>
+		</Container>
 	);
 }
