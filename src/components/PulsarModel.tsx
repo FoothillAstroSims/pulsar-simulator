@@ -9,6 +9,7 @@ import {
 	PULSAR_AXIS_COLOR,
 	PULSAR_AXIS_LINE_WIDTH,
 	PULSAR_BEAM_COLOR,
+	PULSAR_BEAM_HEIGHT,
 	PULSAR_BEAM_TRANS,
 	PULSAR_BODY_COLOR,
 	PULSAR_BODY_HEIGHT_SEG,
@@ -39,13 +40,14 @@ export interface PulsarModelProps {
 	pulsarAxisEuler: Triplet;
 	/** Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator, in radians */
 	pulsarBeamLatitude: number;
-	/** Radius of the pulsar beams */
-	pulsarBeamRadius: number;
+	/** Angular diameter of the pulsar beams */
+	pulsarBeamAngularDiameter: number;
 	/** Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin */
 	cameraPosition: Triplet;
 	/** Toggles animation */
 	isAnimating: boolean;
 }
+
 /**
  * Basic, simplified 3D model of a spinning pulsar emitting radio waves, made with Three.js.
  */
@@ -68,7 +70,7 @@ export function PulsarModel(
 		pulsarPeriod,
 		pulsarAxisEuler,
 		pulsarBeamLatitude,
-		pulsarBeamRadius,
+		pulsarBeamAngularDiameter,
 		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
@@ -95,7 +97,7 @@ export function PulsarModel(
 		pulsarPeriod: pulsarPeriod,
 		pulsarAxisEuler: pulsarAxisEuler,
 		pulsarBeamLatitude: pulsarBeamLatitude,
-		pulsarBeamRadius: pulsarBeamRadius,
+		pulsarBeamAngularDiameter: pulsarBeamAngularDiameter,
 		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
@@ -207,9 +209,9 @@ export function PulsarModel(
 		pulsar.add(pulsarEquator);
 
 		// Beams
-		const pulsarBeamGeometry = createPulsarBeamGeometry(
-			pulsarParams.pulsarBeamRadius,
-		);
+		const pulsarBeamRadius =
+			PULSAR_BEAM_HEIGHT * Math.tan(pulsarParams.pulsarBeamAngularDiameter / 2);
+		const pulsarBeamGeometry = createPulsarBeamGeometry(pulsarBeamRadius);
 		const pulsarBeamMaterial = new THREE.MeshBasicMaterial({
 			color: PULSAR_BEAM_COLOR,
 			side: THREE.DoubleSide,
@@ -534,8 +536,9 @@ export function PulsarModel(
 
 	// Change pulsar beam radius
 	useEffect(() => {
-		if (pulsarBeamRadius !== undefined) {
-			pulsarParamsRef.current.pulsarBeamRadius = pulsarBeamRadius;
+		if (pulsarBeamAngularDiameter !== undefined) {
+			pulsarParamsRef.current.pulsarBeamAngularDiameter =
+				pulsarBeamAngularDiameter;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
@@ -544,6 +547,9 @@ export function PulsarModel(
 				const pulsarBeams = scene.getObjectByName("pulsarBeams")
 					?.children as THREE.Mesh<THREE.ConeGeometry>[];
 				pulsarBeams.forEach((pulsarBeam) => {
+					const pulsarBeamRadius =
+						PULSAR_BEAM_HEIGHT * Math.tan(pulsarBeamAngularDiameter / 2);
+
 					pulsarBeam.geometry.dispose();
 					pulsarBeam.geometry = createPulsarBeamGeometry(pulsarBeamRadius);
 				});
@@ -551,7 +557,7 @@ export function PulsarModel(
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarBeamRadius]);
+	}, [pulsarBeamAngularDiameter]);
 
 	// Display debug info about the model
 	useEffect(() => {

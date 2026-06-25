@@ -4,11 +4,12 @@ import { PulsarModel, PulsarModelProps } from "../src/components/PulsarModel";
 import {
 	CAMERA_POSITION_DEFAULT,
 	PULSAR_AXIS_EULER_DEG_DEFAULT,
+	PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT,
 	PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
-	PULSAR_BEAM_RADIUS_DEFAULT,
 	PULSAR_PERIOD_DEFAULT,
 	PULSAR_PHASE_DEG_DEFAULT,
 	pulsarAxisEulerDegToRad,
+	pulsarBeamAngularDiameterDegToRad,
 	pulsarBeamLatitudeDegToRad,
 	pulsarPhaseDegToRad,
 } from "../src/components/pulsar-config";
@@ -36,10 +37,12 @@ beforeEach(async () => {
 		pulsarBeamLatitude: pulsarBeamLatitudeDegToRad(
 			PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
 		),
-		pulsarBeamRadius: PULSAR_BEAM_RADIUS_DEFAULT,
+		pulsarBeamAngularDiameter: pulsarBeamAngularDiameterDegToRad(
+			PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT,
+		),
 		cameraPosition: CAMERA_POSITION_DEFAULT,
 		isAnimating: false,
-		orbitControlsEnabled: false
+		orbitControlsEnabled: false,
 	};
 	mockRef = {
 		current: null,

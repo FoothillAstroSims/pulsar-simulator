@@ -2,6 +2,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Container, Nav, Navbar } from "react-bootstrap";
 import "./App.css";
+import { AboutModal, HelpModal } from "./components/Modals";
 import {
 	PulsarBeamIntensityPlotPhase,
 	PulsarBeamIntensityPlotTime,
@@ -17,15 +18,14 @@ import {
 	PULSAR_AXIS_EULER_DEG_MAX,
 	PULSAR_AXIS_EULER_DEG_MIN,
 	PULSAR_AXIS_EULER_DEG_STEP,
-	PULSAR_BEAM_HEIGHT,
+	PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT,
+	PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MAX,
+	PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MIN,
+	PULSAR_BEAM_ANGULAR_DIAMETER_DEG_STEP,
 	PULSAR_BEAM_LATITUDE_DEG_DEFAULT,
 	PULSAR_BEAM_LATITUDE_DEG_MAX,
 	PULSAR_BEAM_LATITUDE_DEG_MIN,
 	PULSAR_BEAM_LATITUDE_DEG_STEP,
-	PULSAR_BEAM_RADIUS_DEFAULT,
-	PULSAR_BEAM_RADIUS_MAX,
-	PULSAR_BEAM_RADIUS_MIN,
-	PULSAR_BEAM_RADIUS_STEP,
 	PULSAR_PERIOD_DEFAULT,
 	PULSAR_PERIOD_MAX,
 	PULSAR_PERIOD_MIN,
@@ -35,12 +35,12 @@ import {
 	PULSAR_PHASE_DEG_MIN,
 	PULSAR_PHASE_DEG_STEP,
 	pulsarAxisEulerDegToRad,
+	pulsarBeamAngularDiameterDegToRad,
 	pulsarBeamLatitudeDegToRad,
 	pulsarPhaseDegToRad,
 	type Triplet,
 } from "./components/pulsar-config";
 import { createKeyDownEventHandler } from "./utils";
-import { HelpModal, AboutModal } from "./components/Modals";
 
 export default function App() {
 	// Initialize state variables
@@ -54,8 +54,8 @@ export default function App() {
 	const [pulsarAxisEulerDeg, setPulsarAxisEulerDeg] = useState<Triplet>(
 		PULSAR_AXIS_EULER_DEG_DEFAULT,
 	);
-	const [pulsarBeamRadius, setPulsarBeamRadius] = useState(
-		PULSAR_BEAM_RADIUS_DEFAULT,
+	const [pulsarBeamAngularDiameter, setPulsarBeamAngularDiameter] = useState(
+		PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT,
 	);
 	const [cameraPosition, setCameraPosition] = useState(CAMERA_POSITION_DEFAULT);
 	const [isAnimating, setIsAnimating] = useState(IS_ANIMATING_DEFAULT);
@@ -82,9 +82,9 @@ export default function App() {
 		() => pulsarAxisEulerDegToRad(pulsarAxisEulerDeg),
 		[pulsarAxisEulerDeg],
 	);
-	const pulsarBeamAngleRad = useMemo(
-		() => Math.atan(pulsarBeamRadius / PULSAR_BEAM_HEIGHT),
-		[pulsarBeamRadius],
+	const pulsarBeamAngularDiameterRad = useMemo(
+		() => pulsarBeamAngularDiameterDegToRad(pulsarBeamAngularDiameter),
+		[pulsarBeamAngularDiameter],
 	);
 
 	// References to components
@@ -98,7 +98,7 @@ export default function App() {
 			setPulsarPeriod(PULSAR_PERIOD_DEFAULT);
 			setPulsarAxisEulerDeg(PULSAR_AXIS_EULER_DEG_DEFAULT);
 			setPulsarBeamLatitudeDeg(PULSAR_BEAM_LATITUDE_DEG_DEFAULT);
-			setPulsarBeamRadius(PULSAR_BEAM_RADIUS_DEFAULT);
+			setPulsarBeamAngularDiameter(PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT);
 			// console.log("Pulsar parameters reset");
 		}
 	}, [isAnimating]);
@@ -137,7 +137,7 @@ export default function App() {
 				showHelpModal={showHelpModal}
 				setShowHelpModal={setShowHelpModal}
 			/>
-			<AboutModal 
+			<AboutModal
 				showAboutModal={showAboutModal}
 				setShowAboutModal={setShowAboutModal}
 			/>
@@ -287,14 +287,15 @@ export default function App() {
 					}}
 				/>
 				<PulsarParameterInput
-					name="pulsarBeamRadius"
-					label="Beam radius"
-					min={PULSAR_BEAM_RADIUS_MIN}
-					max={PULSAR_BEAM_RADIUS_MAX}
-					step={PULSAR_BEAM_RADIUS_STEP}
-					value={pulsarBeamRadius}
+					name="pulsarBeamAngularDiameter"
+					label="Angular diameter (°)"
+					min={PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MIN}
+					max={PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MAX}
+					step={PULSAR_BEAM_ANGULAR_DIAMETER_DEG_STEP}
+					value={pulsarBeamAngularDiameter}
 					onChange={(e) => {
-						if (e.target.value) setPulsarBeamRadius(parseFloat(e.target.value));
+						if (e.target.value)
+							setPulsarBeamAngularDiameter(parseFloat(e.target.value));
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
@@ -335,7 +336,7 @@ export default function App() {
 						pulsarPeriod={pulsarPeriod}
 						pulsarAxisEuler={pulsarAxisEulerRad}
 						pulsarBeamLatitude={pulsarBeamLatitudeRad}
-						pulsarBeamRadius={pulsarBeamRadius}
+						pulsarBeamAngularDiameter={pulsarBeamAngularDiameterRad}
 						cameraPosition={cameraPosition}
 						isAnimating={isAnimating}
 						orbitControlsEnabled={orbitControlsEnabled}
@@ -363,7 +364,7 @@ export default function App() {
 							pulsarAxisEulerRad={pulsarAxisEulerRad}
 							pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
 							cameraDirection={cameraPosition}
-							pulsarBeamAngleRad={pulsarBeamAngleRad}
+							pulsarBeamAngleRad={pulsarBeamAngularDiameterRad / 2}
 							isAnimating={isAnimating}
 							showPhaseTimeline={showPhaseTimeline}
 							showPhaseTimelineLabel={showPhaseTimelineLabel}
@@ -396,7 +397,7 @@ export default function App() {
 							pulsarAxisEulerRad={pulsarAxisEulerRad}
 							pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
 							cameraDirection={cameraPosition}
-							pulsarBeamAngleRad={pulsarBeamAngleRad}
+							pulsarBeamAngleRad={pulsarBeamAngularDiameterRad / 2}
 							isAnimating={isAnimating}
 						/>
 					</div>
@@ -424,7 +425,7 @@ export default function App() {
 							pulsarAxisEulerRad={pulsarAxisEulerRad}
 							pulsarBeamLatitude={pulsarBeamLatitudeRad}
 							cameraDirection={cameraPosition}
-							pulsarBeamAngle={pulsarBeamAngleRad}
+							pulsarBeamAngle={pulsarBeamAngularDiameterRad / 2}
 						/>
 					</div>
 				</div>

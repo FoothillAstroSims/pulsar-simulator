@@ -14,7 +14,7 @@ function unrescale(x: number, scale: number = 1, offset: number = 0) {
 }
 
 export const SHOW_DEBUG = true; // Show debug messages
-const DEG_TO_RAG_SCALE = 180 / Math.PI; // Degrees to radians conversion ratio
+const DEG_TO_RAD_SCALE = 180 / Math.PI; // Degrees to radians conversion ratio
 
 // Default values, ranges, and step sizes for each parameter
 export const PULSAR_PHASE_DEG_DEFAULT = 0.0;
@@ -28,9 +28,9 @@ export const PULSAR_PHASE_DEG_XAXIS = range(
 );
 export const PULSAR_PHASE_OFFSET = Math.PI;
 export const pulsarPhaseDegToRad = (x: number) =>
-	rescale(x, DEG_TO_RAG_SCALE, PULSAR_PHASE_OFFSET);
+	rescale(x, DEG_TO_RAD_SCALE, PULSAR_PHASE_OFFSET);
 export const pulsarPhaseRadToDeg = (x: number) =>
-	unrescale(x, DEG_TO_RAG_SCALE, PULSAR_PHASE_OFFSET);
+	unrescale(x, DEG_TO_RAD_SCALE, PULSAR_PHASE_OFFSET);
 
 export const PULSAR_PERIOD_DEFAULT = 4;
 export const PULSAR_PERIOD_MIN = 1;
@@ -42,14 +42,21 @@ export const PULSAR_AXIS_EULER_DEG_MIN: Triplet = [-180, -180, -180];
 export const PULSAR_AXIS_EULER_DEG_MAX: Triplet = [180, 180, 180];
 export const PULSAR_AXIS_EULER_DEG_STEP = 0.1;
 export const pulsarAxisEulerDegToRad = (euler: Triplet) =>
-	euler.map((x) => rescale(x, DEG_TO_RAG_SCALE)) as Triplet;
+	euler.map((x) => rescale(x, DEG_TO_RAD_SCALE)) as Triplet;
 
 export const PULSAR_BEAM_LATITUDE_DEG_DEFAULT = 0;
 export const PULSAR_BEAM_LATITUDE_DEG_MIN = 0;
 export const PULSAR_BEAM_LATITUDE_DEG_MAX = 90;
 export const PULSAR_BEAM_LATITUDE_DEG_STEP = 0.1;
 export const pulsarBeamLatitudeDegToRad = (lat: number) =>
-	rescale(lat, DEG_TO_RAG_SCALE);
+	rescale(lat, DEG_TO_RAD_SCALE);
+
+export const PULSAR_BEAM_ANGULAR_DIAMETER_DEG_DEFAULT = 10;
+export const PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MIN = 0;
+export const PULSAR_BEAM_ANGULAR_DIAMETER_DEG_MAX = 45;
+export const PULSAR_BEAM_ANGULAR_DIAMETER_DEG_STEP = 0.1;
+export const pulsarBeamAngularDiameterDegToRad = (diameter: number) =>
+	rescale(diameter, DEG_TO_RAD_SCALE);
 
 export const IS_ANIMATING_DEFAULT = true;
 export const ORBIT_CONTROLS_ENABLED_DEFAULT = false;
