@@ -92,8 +92,7 @@ export function PulsarSkyView(props: {
 		if (!container || !canvas) return;
 
 		const ctx = canvas.getContext("2d")!;
-
-		const resizeObserver = new ResizeObserver(() => {
+		const resizeCanvas = () => {
 			const containerRect = container.getBoundingClientRect(); // Get the container div
 
 			// Set the canvas dimensions equal to the container dimensions
@@ -102,17 +101,27 @@ export function PulsarSkyView(props: {
 
 			// Redraw the canvas (note that the main canvas drawing effect hook will not fire if the window is resized due to it not depending on DOM parameters)
 			drawContent(canvas, ctx);
-		});
+		};
+
+		resizeCanvas();
+
+		const resizeObserver = new ResizeObserver(resizeCanvas);
 		resizeObserver.observe(container); // Register the resizing observer onto the container div
+
+		return () => resizeObserver.disconnect();
 	}, [drawContent]);
 
 	return (
 		<div
 			ref={containerRef}
-			className="pulsar-sky-view"
-			style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
+			style={{
+				width: "100%",
+				height: "100%",
+				minWidth: 0,
+				minHeight: 0,
+			}}
 		>
-			<canvas ref={canvasRef} />
+			<canvas ref={canvasRef} style={{ display: "block" }} />
 		</div>
 	);
 }

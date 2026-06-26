@@ -56,9 +56,9 @@ export function PulsarModel(
 		ref?: React.RefObject<Record<string, unknown> | null>; // Reference to the node containing the model
 		orbitControlsEnabled?: boolean; // Orbit controls toggle
 		showAxesHelper?: boolean; // Axes toggle
-		showPulsarEquator?: boolean;
-		showPulsarAxis?: boolean;
-		directionalLightEnabled?: boolean;
+		showPulsarEquator?: boolean; // Pulsar equator toggle
+		showPulsarAxis?: boolean; // Pulsar axis toggle
+		directionalLightEnabled?: boolean; // Directional light toggle
 		onPulsarPhaseChange?: (phase: number) => void; // Callback for when the pulsar phase changes. Used to update the pulsar phase state in the parent node
 		onCameraPositionChange?: (pos: Triplet) => void; // Callback for when the camera position/direction changes. Used to update the camera position state in the parent node
 		onPulsarBeamDirectionChange?: (dir: Triplet) => void; // Callback for when the pulsar beam direction changes. Used to report the beam direction to the parent node through state management. Not currently used due to performance issues

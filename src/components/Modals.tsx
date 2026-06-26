@@ -16,7 +16,7 @@ export function HelpModal(props: {
 				Help
 			</Modal.Header>
 			<Modal.Body>TODO</Modal.Body>{" "}
-			{/* TODO: Add help information – basic instructions, keyboard shortcuts */}
+			{/* TODO: Add help information – basic instructions, keyboard shortcuts (can use HTML) */}
 		</Modal>
 	);
 }

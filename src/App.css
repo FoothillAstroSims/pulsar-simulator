@@ -1,22 +1,15 @@
-.pulsar-parameters {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-}
-
-.pulsar-parameter-input {
-	flex: 1;
-	display: flex;
-	flex-wrap: nowrap;
-	width: 50%;
-	max-width: 50vw;
-}
-
 .pulsar-model.orbit-controls:hover {
 	cursor: grab;
 }
 
 .pulsar-model.orbit-controls:active {
 	cursor: grabbing;
+}
+
+.min-h-0 {
+	min-height: 0 !important;
+}
+
+.min-w-0 {
+	min-width: 0;
 }

@@ -1,6 +1,15 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Container, Nav, Navbar } from "react-bootstrap";
+import {
+	Button,
+	Col,
+	Container,
+	Form,
+	Nav,
+	Navbar,
+	Row,
+	Stack,
+} from "react-bootstrap";
 import "./App.css";
 import { AboutModal, HelpModal } from "./components/Modals";
 import {
@@ -132,7 +141,7 @@ export default function App() {
 	}, [resetPulsarParameters]);
 
 	return (
-		<Container fluid>
+		<Container fluid className="px-0">
 			<HelpModal
 				showHelpModal={showHelpModal}
 				setShowHelpModal={setShowHelpModal}
@@ -162,20 +171,27 @@ export default function App() {
 				</Navbar.Collapse>
 			</Navbar>
 
-			<div className="pulsar-parameters">
-				<div style={{ flex: 1, display: "flex", justifyItems: "center" }}>
-					<button type="button" onClick={() => setIsAnimating((prev) => !prev)}>
+			<Container className="d-flex flex-column align-items-center mb-3 mt-3">
+				<Stack
+					direction="horizontal"
+					gap={2}
+					className="justify-content-center flex-wrap"
+				>
+					<Button
+						variant={isAnimating ? "danger" : "primary"}
+						onClick={() => setIsAnimating((prev) => !prev)}
+					>
 						{isAnimating ? "Stop" : "Start"}
-					</button>
-					<button
-						type="button"
+					</Button>
+					<Button
+						variant="secondary"
 						disabled={isAnimating}
 						onClick={() => resetPulsarParameters()}
 					>
 						Reset parameters
-					</button>
-					<button
-						type="button"
+					</Button>
+					<Button
+						variant="secondary"
 						disabled={!orbitControlsEnabled}
 						onClick={() => {
 							(pulsarModelRef.current?.resetCamera as () => void)();
@@ -183,21 +199,28 @@ export default function App() {
 						}}
 					>
 						Reset camera
-					</button>
-					<label>
-						<input
-							type="checkbox"
-							checked={!orbitControlsEnabled}
-							onChange={() => {
-								setOrbitControlsEnabled((prev) => !prev);
-								// console.log(
-								// 	`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
-								// );
-							}}
-						/>
-						Lock camera
-					</label>
-				</div>
+					</Button>
+					<Form.Check
+						label="Lock camera"
+						checked={!orbitControlsEnabled}
+						onChange={() => {
+							setOrbitControlsEnabled((prev) => !prev);
+							// console.log(
+							// 	`Orbit controls ${orbitControlsEnabled ? "disabled" : "enabled"}`,
+							// );
+						}}
+					/>
+					<Form.Check
+						label="Show equator"
+						checked={showPulsarEquator}
+						onChange={() => setShowPulsarEquator((prev) => !prev)}
+					/>
+					<Form.Check
+						label="Show axis of rotation"
+						checked={showPulsarAxis}
+						onChange={() => setShowPulsarAxis((prev) => !prev)}
+					/>
+				</Stack>
 				<PulsarParameterInput
 					name="pulsarPhase"
 					label="Phase (°)"
@@ -235,11 +258,11 @@ export default function App() {
 							parseFloat(e.target.value),
 							pulsarAxisEuler[1],
 							pulsarAxisEuler[2],
-						]);
-						// console.log(`Pulsar position angle (Euler X): ${e.target.value}`);
-					}}
-				/>
-				{" "} */}
+							]);
+							// console.log(`Pulsar position angle (Euler X): ${e.target.value}`);
+							}}
+							/>
+							{" "} */}
 				{/* <PulsarParameterInput
 					name="pulsarAxisInclinationY"
 					label="Y"
@@ -252,10 +275,10 @@ export default function App() {
 							pulsarAxisEuler[0],
 							parseFloat(e.target.value),
 							pulsarAxisEuler[2],
-						]);
-						// console.log(`Pulsar axis inclination Y: ${e.target.value}`);
-					}}
-				/> */}
+							]);
+							// console.log(`Pulsar axis inclination Y: ${e.target.value}`);
+							}}
+							/> */}
 				<PulsarParameterInput
 					name="pulsarInclinationAngle"
 					label="Inclination angle (°)"
@@ -299,27 +322,100 @@ export default function App() {
 						// console.log(`Pulsar beam angle: ${e.target.value}`);
 					}}
 				/>
-				<div style={{ display: "flex" }}>
-					<label style={{ flex: 1 }}>
-						<input
-							type="checkbox"
-							checked={showPulsarEquator}
-							onChange={() => setShowPulsarEquator((prev) => !prev)}
-						/>
-						Show equator
-					</label>
-					<label style={{ flex: 1 }}>
-						<input
-							type="checkbox"
-							checked={showPulsarAxis}
-							onChange={() => setShowPulsarAxis((prev) => !prev)}
-						/>
-						Show axis of rotation
-					</label>
-				</div>
-			</div>
+			</Container>
 
-			<div
+			<Container fluid className="px-3">
+				<Row className="g-2" style={{ height: "66vh", minHeight: "600px" }}>
+					<Col xs={12} lg={6} className="h-100 min-vw-0">
+						<PulsarModel
+							ref={pulsarModelRef}
+							pulsarPhase={pulsarPhaseRad}
+							pulsarPeriod={pulsarPeriod}
+							pulsarAxisEuler={pulsarAxisEulerRad}
+							pulsarBeamLatitude={pulsarBeamLatitudeRad}
+							pulsarBeamAngularDiameter={pulsarBeamAngularDiameterRad}
+							cameraPosition={cameraPosition}
+							isAnimating={isAnimating}
+							orbitControlsEnabled={orbitControlsEnabled}
+							showPulsarEquator={showPulsarEquator}
+							showPulsarAxis={showPulsarAxis}
+							onPulsarPhaseChange={setPulsarPhaseDeg}
+							onCameraPositionChange={setCameraPosition}
+							// showAxesHelper={true}
+						/>
+					</Col>
+					<Col xs={12} lg={6} className="h-100 min-h-0">
+						<Stack gap={2} className="h-100 min-h-0">
+							<div className="min-h-0" style={{ flex: 4 }}>
+								<PulsarBeamIntensityPlotPhase
+									pulsarPhaseDeg={pulsarPhaseDeg}
+									pulsarAxisEulerRad={pulsarAxisEulerRad}
+									pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
+									cameraDirection={cameraPosition}
+									pulsarBeamAngleRad={pulsarBeamAngularDiameterRad / 2}
+									isAnimating={isAnimating}
+									showPhaseTimeline={showPhaseTimeline}
+									showPhaseTimelineLabel={showPhaseTimelineLabel}
+									onPulsarPhaseChange={setPulsarPhaseDeg}
+								/>
+							</div>
+							<Stack
+								direction="horizontal"
+								gap={2}
+								className="justify-content-center"
+								style={{ flex: 1 }}
+							>
+								<Form.Check
+									label="Show timeline"
+									checked={showPhaseTimeline}
+									onChange={() => setShowPhaseTimeline((prev) => !prev)}
+								/>
+								<Form.Check
+									label="Show phase label"
+									checked={showPhaseTimelineLabel}
+									disabled={!showPhaseTimeline}
+									onChange={() => setShowPhaseTimelineLabel((prev) => !prev)}
+								/>
+							</Stack>
+							<div className="min-h-0" style={{ flex: 4 }}>
+								<PulsarBeamIntensityPlotTime
+									ref={pulsarPlotTimeRef}
+									pulsarPhaseRad={pulsarPhaseRad}
+									pulsarAxisEulerRad={pulsarAxisEulerRad}
+									pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
+									cameraDirection={cameraPosition}
+									pulsarBeamAngleRad={pulsarBeamAngularDiameterRad / 2}
+									isAnimating={isAnimating}
+								/>
+							</div>
+							<Stack
+								direction="horizontal"
+								className="justify-content-center"
+								style={{ flex: 1 }}
+							>
+								<Button
+									onClick={() => {
+										(pulsarPlotTimeRef.current?.resetPlot as () => void)();
+									}}
+								>
+									Reset
+								</Button>
+							</Stack>
+							<div className="w-50 mx-auto" style={{ flex: 4 }}>
+								<PulsarSkyView
+									pulsarPhaseRad={pulsarPhaseRad}
+									pulsarAxisEulerRad={pulsarAxisEulerRad}
+									pulsarBeamLatitude={pulsarBeamLatitudeRad}
+									cameraDirection={cameraPosition}
+									pulsarBeamAngle={pulsarBeamAngularDiameterRad / 2}
+								/>
+							</div>
+						</Stack>
+					</Col>
+				</Row>
+			</Container>
+
+			{/* <div
 				className="pulsar-main"
 				style={{
 					display: "flex",
@@ -429,7 +525,7 @@ export default function App() {
 						/>
 					</div>
 				</div>
-			</div>
+			</div> */}
 		</Container>
 	);
 }
