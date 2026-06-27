@@ -186,7 +186,6 @@ export function PulsarBeamIntensityPlotPhase(props: {
 
 	return (
 		<Plot
-			className="pulsar-plot"
 			data={[data]}
 			layout={layout}
 			config={config}
@@ -423,7 +422,6 @@ export function PulsarBeamIntensityPlotTime(props: {
 
 	return (
 		<Plot
-			className="pulsar-plot"
 			data={data}
 			layout={layout}
 			config={config}

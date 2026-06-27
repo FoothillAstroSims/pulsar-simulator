@@ -23,11 +23,8 @@ export default defineConfig({
 					browser: {
 						enabled: true,
 						provider: playwright(),
-						headless: false,
-						instances: [
-							{ browser: "chromium" },
-							// { browser: "firefox" }
-						],
+						headless: true,
+						instances: [{ browser: "chromium" }, { browser: "firefox" }],
 						viewport: {
 							width: 1280,
 							height: 720,
@@ -36,5 +33,9 @@ export default defineConfig({
 				},
 			},
 		],
+		coverage: {
+			reporter: ["json-summary", "json"],
+			reportOnFailure: true,
+		},
 	},
 });
