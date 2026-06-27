@@ -30,6 +30,7 @@ export default defineConfig({
 							height: 720,
 						},
 					},
+                    
 				},
 			},
 		],

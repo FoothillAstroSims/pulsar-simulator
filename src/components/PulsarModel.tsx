@@ -33,15 +33,15 @@ import {
  */
 export interface PulsarModelProps {
 	/** Rotation around the pulsar's axis, in radians */
-	pulsarPhase: number;
+	pulsarPhaseRad: number;
 	/** Number of seconds for the pulsar to make one revolution around its axis */
 	pulsarPeriod: number;
 	/** Euler angles, in radians, representing the rotation of the pulsar axis */
-	pulsarAxisEuler: Triplet;
+	pulsarAxisEulerRad: Triplet;
 	/** Latitude of the pulsar beams i.e. the azimuthal angle measured from the equator, in radians */
-	pulsarBeamLatitude: number;
-	/** Angular diameter of the pulsar beams */
-	pulsarBeamAngularDiameter: number;
+	pulsarBeamLatitudeRad: number;
+	/** Angular diameter of the pulsar beams, in radians */
+	pulsarBeamAngularDiameterRad: number;
 	/** Position of the camera. Also doubles as the direction the camera is facing, since it always looks at the origin */
 	cameraPosition: Triplet;
 	/** Toggles animation */
@@ -66,11 +66,11 @@ export function PulsarModel(
 ) {
 	const {
 		ref,
-		pulsarPhase,
+		pulsarPhaseRad,
 		pulsarPeriod,
-		pulsarAxisEuler,
-		pulsarBeamLatitude,
-		pulsarBeamAngularDiameter,
+		pulsarAxisEulerRad,
+		pulsarBeamLatitudeRad,
+		pulsarBeamAngularDiameterRad,
 		cameraPosition,
 		isAnimating,
 		orbitControlsEnabled,
@@ -93,11 +93,11 @@ export function PulsarModel(
 		stopAnimation: () => void;
 	} | null>(null); // References to model elements and parameters
 	const pulsarParamsRef = useRef({
-		pulsarPhase: pulsarPhase,
+		pulsarPhaseRad: pulsarPhaseRad,
 		pulsarPeriod: pulsarPeriod,
-		pulsarAxisEuler: pulsarAxisEuler,
-		pulsarBeamLatitude: pulsarBeamLatitude,
-		pulsarBeamAngularDiameter: pulsarBeamAngularDiameter,
+		pulsarAxisEulerRad: pulsarAxisEulerRad,
+		pulsarBeamLatitudeRad: pulsarBeamLatitudeRad,
+		pulsarBeamAngularDiameterRad: pulsarBeamAngularDiameterRad,
 		cameraPosition: cameraPosition,
 		isAnimating: isAnimating,
 		orbitControlsEnabled: orbitControlsEnabled,
@@ -210,7 +210,7 @@ export function PulsarModel(
 
 		// Beams
 		const pulsarBeamRadius =
-			PULSAR_BEAM_HEIGHT * Math.tan(pulsarParams.pulsarBeamAngularDiameter / 2);
+			PULSAR_BEAM_HEIGHT * Math.tan(pulsarParams.pulsarBeamAngularDiameterRad / 2);
 		const pulsarBeamGeometry = createPulsarBeamGeometry(pulsarBeamRadius);
 		const pulsarBeamMaterial = new THREE.MeshBasicMaterial({
 			color: PULSAR_BEAM_COLOR,
@@ -225,7 +225,7 @@ export function PulsarModel(
 		setPulsarBeamsRotation(
 			pulsarBeam1,
 			pulsarBeam2,
-			pulsarParams.pulsarBeamLatitude,
+			pulsarParams.pulsarBeamLatitudeRad,
 		);
 
 		// pulsarBeam1.material = pulsarBeam1.material.clone();
@@ -237,13 +237,13 @@ export function PulsarModel(
 		pulsarBeams.add(pulsarBeam2);
 		pulsar.add(pulsarBeams);
 
-		pulsar.rotation.y = pulsarParams.pulsarPhase;
+		pulsar.rotation.y = pulsarParams.pulsarPhaseRad;
 
 		// Wrapper for axis direction
 		const pulsarAxisDirectionWrapper = new THREE.Group();
 		pulsarAxisDirectionWrapper.name = "pulsarAxisDirectionWrapper";
 		pulsarAxisDirectionWrapper.add(pulsar);
-		pulsarAxisDirectionWrapper.rotation.set(...pulsarParams.pulsarAxisEuler);
+		pulsarAxisDirectionWrapper.rotation.set(...pulsarParams.pulsarAxisEulerRad);
 		scene.add(pulsarAxisDirectionWrapper);
 
 		// Camera
@@ -298,14 +298,14 @@ export function PulsarModel(
 
 			if (pulsarParams.isAnimating) {
 				// Rotate pulsar in real time
-				pulsarParams.pulsarPhase =
-					(pulsarParams.pulsarPhase +
+				pulsarParams.pulsarPhaseRad =
+					(pulsarParams.pulsarPhaseRad +
 						(2 * Math.PI * dt) / pulsarParams.pulsarPeriod) %
 					(2 * Math.PI);
-				pulsar.rotation.y = pulsarParams.pulsarPhase;
+				pulsar.rotation.y = pulsarParams.pulsarPhaseRad;
 
 				pulsarParams.onPulsarPhaseChange?.(
-					pulsarPhaseRadToDeg(pulsarParams.pulsarPhase),
+					pulsarPhaseRadToDeg(pulsarParams.pulsarPhaseRad),
 				); // Report pulsar phase to parent
 				pulsarParams.onPulsarBeamDirectionChange?.(
 					getMeshDirection(pulsarBeam1, [0, 1, 0]),
@@ -477,18 +477,18 @@ export function PulsarModel(
 
 	// Change pulsar phase from props when animation is stopped
 	useEffect(() => {
-		if (pulsarPhase === undefined) return;
+		if (pulsarPhaseRad === undefined) return;
 		if (pulsarParamsRef.current.isAnimating) return;
 
-		pulsarParamsRef.current.pulsarPhase = pulsarPhase;
+		pulsarParamsRef.current.pulsarPhaseRad = pulsarPhaseRad;
 
 		const { scene, camera, renderer } = modelRef.current ?? {};
 		if (scene && camera && renderer) {
 			const pulsar = scene.getObjectByName("pulsar") as THREE.Group;
-			pulsar.rotation.y = pulsarPhase;
+			pulsar.rotation.y = pulsarPhaseRad;
 			renderer.render(scene, camera);
 		}
-	}, [pulsarPhase]);
+	}, [pulsarPhaseRad]);
 
 	// Change pulsar period
 	useEffect(() => {
@@ -501,25 +501,25 @@ export function PulsarModel(
 
 	// Change pulsar beam latitude
 	useEffect(() => {
-		if (pulsarBeamLatitude !== undefined) {
-			pulsarParamsRef.current.pulsarBeamLatitude = pulsarBeamLatitude;
+		if (pulsarBeamLatitudeRad !== undefined) {
+			pulsarParamsRef.current.pulsarBeamLatitudeRad = pulsarBeamLatitudeRad;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
 			if (scene && camera && renderer) {
 				const pulsarBeam1 = scene.getObjectByName("pulsarBeam1") as THREE.Mesh;
 				const pulsarBeam2 = scene.getObjectByName("pulsarBeam2") as THREE.Mesh;
-				setPulsarBeamsRotation(pulsarBeam1, pulsarBeam2, pulsarBeamLatitude);
+				setPulsarBeamsRotation(pulsarBeam1, pulsarBeam2, pulsarBeamLatitudeRad);
 
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarBeamLatitude]);
+	}, [pulsarBeamLatitudeRad]);
 
 	// Change pulsar axis of rotation
 	useEffect(() => {
-		if (pulsarAxisEuler !== undefined) {
-			pulsarParamsRef.current.pulsarAxisEuler = pulsarAxisEuler;
+		if (pulsarAxisEulerRad !== undefined) {
+			pulsarParamsRef.current.pulsarAxisEulerRad = pulsarAxisEulerRad;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
@@ -527,18 +527,18 @@ export function PulsarModel(
 				const pulsarAxisDirectionWrapper = scene.getObjectByName(
 					"pulsarAxisDirectionWrapper",
 				) as THREE.Group;
-				pulsarAxisDirectionWrapper.rotation.set(...pulsarAxisEuler);
+				pulsarAxisDirectionWrapper.rotation.set(...pulsarAxisEulerRad);
 
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarAxisEuler]);
+	}, [pulsarAxisEulerRad]);
 
 	// Change pulsar beam radius
 	useEffect(() => {
-		if (pulsarBeamAngularDiameter !== undefined) {
-			pulsarParamsRef.current.pulsarBeamAngularDiameter =
-				pulsarBeamAngularDiameter;
+		if (pulsarBeamAngularDiameterRad !== undefined) {
+			pulsarParamsRef.current.pulsarBeamAngularDiameterRad =
+				pulsarBeamAngularDiameterRad;
 
 			const { scene, camera, renderer } = modelRef.current ?? {};
 
@@ -548,7 +548,7 @@ export function PulsarModel(
 					?.children as THREE.Mesh<THREE.ConeGeometry>[];
 				pulsarBeams.forEach((pulsarBeam) => {
 					const pulsarBeamRadius =
-						PULSAR_BEAM_HEIGHT * Math.tan(pulsarBeamAngularDiameter / 2);
+						PULSAR_BEAM_HEIGHT * Math.tan(pulsarBeamAngularDiameterRad / 2);
 
 					pulsarBeam.geometry.dispose();
 					pulsarBeam.geometry = createPulsarBeamGeometry(pulsarBeamRadius);
@@ -557,7 +557,7 @@ export function PulsarModel(
 				renderer.render(scene, camera);
 			}
 		}
-	}, [pulsarBeamAngularDiameter]);
+	}, [pulsarBeamAngularDiameterRad]);
 
 	// Display debug info about the model
 	useEffect(() => {
@@ -569,11 +569,11 @@ export function PulsarModel(
 				const dir = getMeshDirection(pulsarBeam1, [0, 1, 0]);
 				console.log(`Pulsar beam direction: ${dir.map((x) => x.toFixed(5))}`);
 				console.log(
-					`getPulsarBeamDirection: ${getPulsarBeamDirection(pulsarPhase, pulsarAxisEuler, pulsarBeamLatitude).map((x) => x.toFixed(5))}`,
+					`getPulsarBeamDirection: ${getPulsarBeamDirection(pulsarPhaseRad, pulsarAxisEulerRad, pulsarBeamLatitudeRad).map((x) => x.toFixed(5))}`,
 				);
 			}
 		}
-	}, [pulsarPhase, pulsarAxisEuler, pulsarBeamLatitude]);
+	}, [pulsarPhaseRad, pulsarAxisEulerRad, pulsarBeamLatitudeRad]);
 
 	return (
 		<div

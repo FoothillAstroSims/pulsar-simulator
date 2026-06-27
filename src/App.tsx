@@ -329,11 +329,11 @@ export default function App() {
 					<Col xs={12} lg={6} className="h-100 min-vw-0">
 						<PulsarModel
 							ref={pulsarModelRef}
-							pulsarPhase={pulsarPhaseRad}
+							pulsarPhaseRad={pulsarPhaseRad}
 							pulsarPeriod={pulsarPeriod}
-							pulsarAxisEuler={pulsarAxisEulerRad}
-							pulsarBeamLatitude={pulsarBeamLatitudeRad}
-							pulsarBeamAngularDiameter={pulsarBeamAngularDiameterRad}
+							pulsarAxisEulerRad={pulsarAxisEulerRad}
+							pulsarBeamLatitudeRad={pulsarBeamLatitudeRad}
+							pulsarBeamAngularDiameterRad={pulsarBeamAngularDiameterRad}
 							cameraPosition={cameraPosition}
 							isAnimating={isAnimating}
 							orbitControlsEnabled={orbitControlsEnabled}
